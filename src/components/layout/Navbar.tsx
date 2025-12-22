@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingBag, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -16,6 +17,7 @@ const navLinks = [
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { totalItems, setIsOpen: setCartOpen } = useCart();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50">
@@ -56,10 +58,15 @@ export function Navbar() {
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={() => setCartOpen(true)}
+            >
               <ShoppingBag className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-medium">
-                0
+                {totalItems}
               </span>
             </Button>
           </div>
@@ -104,9 +111,17 @@ export function Navbar() {
                     <User className="h-4 w-4 mr-2" />
                     Account
                   </Button>
-                  <Button variant="default" size="sm" className="flex-1">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => {
+                      setIsOpen(false);
+                      setCartOpen(true);
+                    }}
+                  >
                     <ShoppingBag className="h-4 w-4 mr-2" />
-                    Cart (0)
+                    Cart ({totalItems})
                   </Button>
                 </div>
               </div>
