@@ -121,11 +121,11 @@ export default function Cart() {
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-semibold text-foreground">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              R{(item.price * item.quantity * 18.5).toFixed(2)}
                             </p>
                             {item.quantity > 1 && (
                               <p className="text-sm text-muted-foreground">
-                                ${item.price.toFixed(2)} each
+                                R{(item.price * 18.5).toFixed(2)} each
                               </p>
                             )}
                           </div>
@@ -155,7 +155,7 @@ export default function Cart() {
                   <div className="space-y-4 mb-6">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Subtotal</span>
-                      <span>${totalPrice.toFixed(2)}</span>
+                      <span>R{(totalPrice * 18.5).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Shipping</span>
@@ -163,19 +163,19 @@ export default function Cart() {
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Tax</span>
-                      <span>Calculated at checkout</span>
+                      <span>Included</span>
                     </div>
                   </div>
 
                   <div className="border-t border-border pt-4 mb-6">
                     <div className="flex justify-between text-lg font-semibold text-foreground">
                       <span>Total</span>
-                      <span>${totalPrice.toFixed(2)}</span>
+                      <span>R{(totalPrice * 18.5).toFixed(2)}</span>
                     </div>
                   </div>
 
-                  <Button className="w-full" size="lg" variant="hero">
-                    Proceed to Checkout
+                  <Button className="w-full" size="lg" variant="hero" asChild>
+                    <Link to="/checkout">Proceed to Checkout</Link>
                   </Button>
 
                   <p className="text-center text-sm text-muted-foreground mt-4">

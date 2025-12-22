@@ -256,11 +256,11 @@ export default function ProductDetail() {
               {/* Price */}
               <div className="flex items-baseline gap-3 mb-6">
                 <span className="text-3xl font-semibold text-foreground">
-                  ${product.price}
+                  R{(product.price * 18.5).toFixed(2)}
                 </span>
                 {product.originalPrice && (
                   <span className="text-xl text-muted-foreground line-through">
-                    ${product.originalPrice}
+                    R{(product.originalPrice * 18.5).toFixed(2)}
                   </span>
                 )}
               </div>

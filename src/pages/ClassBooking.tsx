@@ -459,7 +459,7 @@ export default function ClassBooking() {
                     className="w-full"
                     disabled={isSubmitting || !selectedDate || !selectedTimeSlot}
                   >
-                    {isSubmitting ? "Processing..." : `Complete Booking - $${totalPrice}`}
+                    {isSubmitting ? "Processing..." : `Complete Booking - R${(totalPrice * 18.5).toFixed(2)}`}
                   </Button>
                 </form>
               </motion.div>
@@ -498,7 +498,7 @@ export default function ClassBooking() {
                   <div className="border-t border-border mt-6 pt-6">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-muted-foreground">Price per person</span>
-                      <span className="font-medium">${classData.price}</span>
+                      <span className="font-medium">R{(classData.price * 18.5).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-muted-foreground">Attendees</span>
@@ -506,7 +506,7 @@ export default function ClassBooking() {
                     </div>
                     <div className="flex justify-between items-center text-lg font-semibold pt-2 border-t border-border">
                       <span>Total</span>
-                      <span>${totalPrice}</span>
+                      <span>R{(totalPrice * 18.5).toFixed(2)}</span>
                     </div>
                   </div>
 

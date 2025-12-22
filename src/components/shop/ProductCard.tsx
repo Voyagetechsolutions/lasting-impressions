@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ShoppingBag, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
 
 interface Product {
   id: string;
@@ -9,6 +10,9 @@ interface Product {
   image: string;
   category: string;
   originalPrice?: number;
+  material?: string;
+  color?: string;
+  inStock?: boolean;
 }
 
 interface ProductCardProps {
@@ -16,6 +20,21 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { addItem } = useCart();
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      category: product.category,
+    });
+  };
+
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-elegant hover:shadow-elevated transition-all duration-500">
       <Link to={`/product/${product.id}`} className="block relative aspect-square overflow-hidden">
@@ -40,6 +59,13 @@ export function ProductCard({ product }: ProductCardProps) {
         <span className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm text-foreground text-xs font-medium px-3 py-1 rounded-full">
           {product.category}
         </span>
+
+        {/* Sale badge */}
+        {product.originalPrice && (
+          <span className="absolute top-4 right-4 bg-destructive text-destructive-foreground text-xs font-medium px-2 py-1 rounded-full">
+            Sale
+          </span>
+        )}
       </Link>
 
       <div className="p-6">
@@ -52,18 +78,24 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-semibold text-foreground">
-              ${product.price}
+              R{(product.price * 18.5).toFixed(2)}
             </span>
             {product.originalPrice && (
               <span className="text-sm text-muted-foreground line-through">
-                ${product.originalPrice}
+                R{(product.originalPrice * 18.5).toFixed(2)}
               </span>
             )}
           </div>
           
-          <Button size="sm" variant="default" className="gap-2">
+          <Button 
+            size="sm" 
+            variant="default" 
+            className="gap-2"
+            onClick={handleAddToCart}
+            disabled={product.inStock === false}
+          >
             <ShoppingBag className="h-4 w-4" />
-            Add
+            {product.inStock === false ? "Out of Stock" : "Add"}
           </Button>
         </div>
       </div>

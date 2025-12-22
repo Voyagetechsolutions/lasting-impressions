@@ -1,0 +1,90 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Infinity symbol made of beads -->
+  <g transform="translate(200, 120)">
+    <!-- Left loop -->
+    <g>
+      <!-- Outer beads -->
+      <circle cx="-80" cy="-40" r="12" fill="#D4A574" opacity="0.9"/>
+      <circle cx="-90" cy="-25" r="12" fill="#C49464" opacity="0.9"/>
+      <circle cx="-95" cy="-5" r="12" fill="#B88454" opacity="0.9"/>
+      <circle cx="-95" cy="15" r="12" fill="#AC7444" opacity="0.9"/>
+      <circle cx="-90" cy="35" r="12" fill="#A06434" opacity="0.9"/>
+      <circle cx="-80" cy="50" r="12" fill="#945424" opacity="0.9"/>
+      <circle cx="-65" cy="60" r="12" fill="#884414" opacity="0.9"/>
+      <circle cx="-45" cy="65" r="12" fill="#7C3404" opacity="0.9"/>
+      <circle cx="-25" cy="60" r="12" fill="#884414" opacity="0.9"/>
+      <circle cx="-10" cy="50" r="12" fill="#945424" opacity="0.9"/>
+      <circle cx="0" cy="35" r="12" fill="#A06434" opacity="0.9"/>
+      <circle cx="5" cy="15" r="12" fill="#AC7444" opacity="0.9"/>
+      <circle cx="5" cy="-5" r="12" fill="#B88454" opacity="0.9"/>
+      <circle cx="0" cy="-25" r="12" fill="#C49464" opacity="0.9"/>
+      <circle cx="-10" cy="-40" r="12" fill="#D4A574" opacity="0.9"/>
+      <circle cx="-25" cy="-50" r="12" fill="#E0B584" opacity="0.9"/>
+      <circle cx="-45" cy="-55" r="12" fill="#ECC594" opacity="0.9"/>
+      <circle cx="-65" cy="-50" r="12" fill="#E0B584" opacity="0.9"/>
+      
+      <!-- Inner beads -->
+      <circle cx="-60" cy="-30" r="10" fill="#F8D5A4" opacity="0.8"/>
+      <circle cx="-70" cy="-15" r="10" fill="#F2C994" opacity="0.8"/>
+      <circle cx="-75" cy="0" r="10" fill="#ECBD84" opacity="0.8"/>
+      <circle cx="-75" cy="20" r="10" fill="#E6B174" opacity="0.8"/>
+      <circle cx="-70" cy="35" r="10" fill="#E0A564" opacity="0.8"/>
+      <circle cx="-60" cy="45" r="10" fill="#DA9954" opacity="0.8"/>
+      <circle cx="-45" cy="50" r="10" fill="#D48D44" opacity="0.8"/>
+      <circle cx="-25" cy="45" r="10" fill="#DA9954" opacity="0.8"/>
+      <circle cx="-15" cy="35" r="10" fill="#E0A564" opacity="0.8"/>
+      <circle cx="-10" cy="20" r="10" fill="#E6B174" opacity="0.8"/>
+      <circle cx="-10" cy="0" r="10" fill="#ECBD84" opacity="0.8"/>
+      <circle cx="-15" cy="-15" r="10" fill="#F2C994" opacity="0.8"/>
+      <circle cx="-25" cy="-30" r="10" fill="#F8D5A4" opacity="0.8"/>
+      <circle cx="-45" cy="-35" r="10" fill="#FEE5B4" opacity="0.8"/>
+    </g>
+    
+    <!-- Right loop -->
+    <g>
+      <!-- Outer beads -->
+      <circle cx="80" cy="-40" r="12" fill="#D4A574" opacity="0.9"/>
+      <circle cx="90" cy="-25" r="12" fill="#C49464" opacity="0.9"/>
+      <circle cx="95" cy="-5" r="12" fill="#B88454" opacity="0.9"/>
+      <circle cx="95" cy="15" r="12" fill="#AC7444" opacity="0.9"/>
+      <circle cx="90" cy="35" r="12" fill="#A06434" opacity="0.9"/>
+      <circle cx="80" cy="50" r="12" fill="#945424" opacity="0.9"/>
+      <circle cx="65" cy="60" r="12" fill="#884414" opacity="0.9"/>
+      <circle cx="45" cy="65" r="12" fill="#7C3404" opacity="0.9"/>
+      <circle cx="25" cy="60" r="12" fill="#884414" opacity="0.9"/>
+      <circle cx="10" cy="50" r="12" fill="#945424" opacity="0.9"/>
+      <circle cx="0" cy="35" r="12" fill="#A06434" opacity="0.9"/>
+      <circle cx="-5" cy="15" r="12" fill="#AC7444" opacity="0.9"/>
+      <circle cx="-5" cy="-5" r="12" fill="#B88454" opacity="0.9"/>
+      <circle cx="0" cy="-25" r="12" fill="#C49464" opacity="0.9"/>
+      <circle cx="10" cy="-40" r="12" fill="#D4A574" opacity="0.9"/>
+      <circle cx="25" cy="-50" r="12" fill="#E0B584" opacity="0.9"/>
+      <circle cx="45" cy="-55" r="12" fill="#ECC594" opacity="0.9"/>
+      <circle cx="65" cy="-50" r="12" fill="#E0B584" opacity="0.9"/>
+      
+      <!-- Inner beads -->
+      <circle cx="60" cy="-30" r="10" fill="#F8D5A4" opacity="0.8"/>
+      <circle cx="70" cy="-15" r="10" fill="#F2C994" opacity="0.8"/>
+      <circle cx="75" cy="0" r="10" fill="#ECBD84" opacity="0.8"/>
+      <circle cx="75" cy="20" r="10" fill="#E6B174" opacity="0.8"/>
+      <circle cx="70" cy="35" r="10" fill="#E0A564" opacity="0.8"/>
+      <circle cx="60" cy="45" r="10" fill="#DA9954" opacity="0.8"/>
+      <circle cx="45" cy="50" r="10" fill="#D48D44" opacity="0.8"/>
+      <circle cx="25" cy="45" r="10" fill="#DA9954" opacity="0.8"/>
+      <circle cx="15" cy="35" r="10" fill="#E0A564" opacity="0.8"/>
+      <circle cx="10" cy="20" r="10" fill="#E6B174" opacity="0.8"/>
+      <circle cx="10" cy="0" r="10" fill="#ECBD84" opacity="0.8"/>
+      <circle cx="15" cy="-15" r="10" fill="#F2C994" opacity="0.8"/>
+      <circle cx="25" cy="-30" r="10" fill="#F8D5A4" opacity="0.8"/>
+      <circle cx="45" cy="-35" r="10" fill="#FEE5B4" opacity="0.8"/>
+    </g>
+  </g>
+  
+  <!-- Text -->
+  <text x="200" y="200" text-anchor="middle" font-family="serif" font-size="32" font-weight="bold" fill="#7C3404">
+    LASTING IMPRESSIONS
+  </text>
+  <text x="200" y="230" text-anchor="middle" font-family="serif" font-size="18" fill="#A06434">
+    Handmade Jewelry &amp; Beading
+  </text>
+</svg>
