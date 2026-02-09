@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingBag, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { totalItems, setIsOpen: setCartOpen } = useCart();
+  const navigate = useNavigate();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50">
@@ -58,7 +59,7 @@ export function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-4">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/admin/login")}>
               <User className="h-5 w-5" />
             </Button>
             <Button
@@ -110,9 +111,9 @@ export function Navbar() {
                   </Link>
                 ))}
                 <div className="flex items-center gap-4 pt-4 px-4">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => { setIsOpen(false); navigate("/admin/login"); }}>
                     <User className="h-4 w-4 mr-2" />
-                    Account
+                    Admin
                   </Button>
                   <Button
                     variant="default"

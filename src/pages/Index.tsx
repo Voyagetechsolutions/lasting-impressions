@@ -1,59 +1,41 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Star, Sparkles, BookOpen, Calendar } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/shop/ProductCard";
 import heroImage from "@/assets/hero-jewelry.jpg";
 import beadsImage from "@/assets/beads-collection.jpg";
 import classImage from "@/assets/beading-class.jpg";
-import productNecklace from "@/assets/product-necklace.jpg";
-import productBracelet from "@/assets/product-bracelet.jpg";
-import productEarrings from "@/assets/product-earrings.jpg";
 
-const featuredProducts = [
-  {
-    id: "1",
-    name: "Teal Gemstone Necklace",
-    price: 89,
-    image: productNecklace,
-    category: "Necklaces",
-  },
-  {
-    id: "2",
-    name: "Bronze & Teal Bracelet",
-    price: 45,
-    image: productBracelet,
-    category: "Bracelets",
-  },
-  {
-    id: "3",
-    name: "Pearl Drop Earrings",
-    price: 38,
-    image: productEarrings,
-    category: "Earrings",
-  },
-];
-
-const testimonials = [
-  {
-    name: "Sarah M.",
-    text: "The jewelry is absolutely stunning! Each piece feels so unique and special. I've received so many compliments.",
-    rating: 5,
-  },
-  {
-    name: "Emily R.",
-    text: "Taking the beginner beading class was such a joy. The instructor was patient and I left with a beautiful bracelet I made myself!",
-    rating: 5,
-  },
-  {
-    name: "Jennifer L.",
-    text: "Best quality beads I've found anywhere. The selection is incredible and the service is always wonderful.",
-    rating: 5,
-  },
-];
 
 const Index = () => {
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("/api/products");
+        if (response.ok) {
+          const data = await response.json();
+          setFeaturedProducts(
+            data.slice(0, 3).map((p: any) => ({
+              ...p,
+              price: parseFloat(p.price),
+              image: p.images?.[0] || heroImage,
+              inStock: p.in_stock ?? true,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch featured products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -297,49 +279,6 @@ const Index = () => {
                 </Link>
               </Button>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-24 bg-charcoal text-cream">
-        <div className="container mx-auto px-4 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-serif font-semibold mb-4">
-              What Our Community Says
-            </h2>
-            <p className="text-cream/60 text-lg">
-              Stories from our wonderful customers and students
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-cream/5 rounded-2xl p-8 border border-cream/10"
-              >
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="h-5 w-5 fill-gold text-gold" />
-                  ))}
-                </div>
-                <p className="text-cream/80 leading-relaxed mb-6 italic">
-                  "{testimonial.text}"
-                </p>
-                <p className="font-medium text-gold">{testimonial.name}</p>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>

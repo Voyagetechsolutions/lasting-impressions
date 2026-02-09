@@ -8,14 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layout } from "@/components/layout/Layout";
-import { useAdmin } from "@/contexts/AdminContext";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CustomBeadsRequest() {
-  const { addCustomRequest } = useAdmin();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -34,45 +32,51 @@ export default function CustomBeadsRequest() {
     setIsSubmitting(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate processing
-
-      addCustomRequest({
-        customer: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
+      const response = await fetch("/api/custom-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        description: formData.description,
-        specifications: {
-          material: formData.material || undefined,
-          color: formData.color || undefined,
-          size: formData.size || undefined,
-          quantity: formData.quantity || undefined,
-          budget: formData.budget || undefined,
-        },
-        status: "pending",
+        body: JSON.stringify({
+          customer: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+          },
+          description: formData.description,
+          specifications: {
+            material: formData.material || undefined,
+            color: formData.color || undefined,
+            size: formData.size || undefined,
+            quantity: formData.quantity || undefined,
+            budget: formData.budget || undefined,
+          },
+        }),
       });
 
-      toast({
-        title: "Request Submitted!",
-        description: "We'll review your custom bead request and get back to you within 24-48 hours.",
-      });
+      if (response.ok) {
+        toast({
+          title: "Request Submitted!",
+          description: "We'll review your custom bead request and get back to you within 24-48 hours.",
+        });
 
-      // Reset form
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        description: "",
-        material: "",
-        color: "",
-        size: "",
-        quantity: "",
-        budget: 0,
-      });
-
+        // Reset form
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          description: "",
+          material: "",
+          color: "",
+          size: "",
+          quantity: "",
+          budget: 0,
+        });
+      } else {
+        throw new Error("Failed to submit request");
+      }
     } catch (error) {
       toast({
         title: "Submission Failed",

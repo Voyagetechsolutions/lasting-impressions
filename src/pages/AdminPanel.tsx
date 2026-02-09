@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Package, 
-  Users, 
-  ShoppingCart, 
-  Calendar, 
-  Settings, 
+import {
+  Package,
+  Users,
+  ShoppingCart,
+  Calendar,
+  Settings,
   BarChart3,
   Plus,
   Edit,
@@ -23,14 +23,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Layout } from "@/components/layout/Layout";
 import { useAdmin } from "@/contexts/AdminContext";
-import { ProductForm } from "@/components/admin/ProductForm";
+import ProductForm from "@/components/admin/ProductForm";
 import { Product } from "@/contexts/AdminContext";
 
 export default function AdminPanel() {
-  const { 
-    products, 
-    addProduct, 
-    updateProduct, 
+  const {
+    products,
+    addProduct,
+    updateProduct,
     deleteProduct,
     orders,
     updateOrderStatus,
@@ -41,12 +41,12 @@ export default function AdminPanel() {
     addQuoteToRequest,
     getAnalytics
   } = useAdmin();
-  
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
-  
+
   const analytics = getAnalytics();
 
   const getStatusColor = (status: string) => {
@@ -177,7 +177,7 @@ export default function AdminPanel() {
                     <p className="text-xs text-muted-foreground">Total revenue from orders</p>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Orders</CardTitle>
@@ -188,7 +188,7 @@ export default function AdminPanel() {
                     <p className="text-xs text-muted-foreground">Total orders received</p>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Products</CardTitle>
@@ -199,7 +199,7 @@ export default function AdminPanel() {
                     <p className="text-xs text-muted-foreground">Products in inventory</p>
                   </CardContent>
                 </Card>
-                
+
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Class Bookings</CardTitle>

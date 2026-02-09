@@ -1,119 +1,77 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Grid3X3, LayoutList, SlidersHorizontal } from "lucide-react";
+import { Grid3X3, LayoutList, SlidersHorizontal, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductSearch, FilterOptions } from "@/components/shop/ProductSearch";
-import productNecklace from "@/assets/product-necklace.jpg";
-import productBracelet from "@/assets/product-bracelet.jpg";
-import productEarrings from "@/assets/product-earrings.jpg";
 import heroJewelry from "@/assets/hero-jewelry.jpg";
 
-const products = [
-  {
-    id: "1",
-    name: "Amber Gemstone Pendant Necklace",
-    price: 89,
-    image: productNecklace,
-    category: "Necklaces",
-    material: "Amber",
-    color: "Bronze",
-    inStock: true,
-  },
-  {
-    id: "2",
-    name: "Turquoise & Bronze Wrap Bracelet",
-    price: 45,
-    image: productBracelet,
-    category: "Bracelets",
-    material: "Turquoise",
-    color: "Turquoise",
-    inStock: true,
-  },
-  {
-    id: "3",
-    name: "Pearl & Garnet Drop Earrings",
-    price: 38,
-    image: productEarrings,
-    category: "Earrings",
-    material: "Pearl",
-    color: "White",
-    inStock: true,
-  },
-  {
-    id: "4",
-    name: "Teal Cascade Necklace Set",
-    price: 125,
-    originalPrice: 150,
-    image: heroJewelry,
-    category: "Sets",
-    material: "Gemstone",
-    color: "Teal",
-    inStock: true,
-  },
-  {
-    id: "5",
-    name: "Bronze Beaded Cuff",
-    price: 52,
-    image: productBracelet,
-    category: "Bracelets",
-    material: "Bronze",
-    color: "Bronze",
-    inStock: false,
-  },
-  {
-    id: "6",
-    name: "Golden Hour Statement Earrings",
-    price: 42,
-    image: productEarrings,
-    category: "Earrings",
-    material: "Gold",
-    color: "Gold",
-    inStock: true,
-  },
-  {
-    id: "7",
-    name: "Silver Moon Phase Necklace",
-    price: 78,
-    image: productNecklace,
-    category: "Necklaces",
-    material: "Silver",
-    color: "Silver",
-    inStock: true,
-  },
-  {
-    id: "8",
-    name: "Rose Quartz Healing Bracelet",
-    price: 35,
-    image: productBracelet,
-    category: "Bracelets",
-    material: "Rose Quartz",
-    color: "Pink",
-    inStock: true,
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  images: string[];
+  image?: string;
+  category: string;
+  material?: string;
+  color?: string;
+  inStock: boolean;
+  stock: number;
+  description?: string;
+}
 
 const availableCategories = ["Necklaces", "Bracelets", "Earrings", "Sets"];
 const availableMaterials = ["Amber", "Turquoise", "Pearl", "Gemstone", "Bronze", "Gold", "Silver", "Rose Quartz"];
 const availableColors = ["Bronze", "Turquoise", "White", "Teal", "Gold", "Silver", "Pink"];
-const maxPrice = Math.max(...products.map(p => p.price));
 
 export default function ShopJewelry() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<FilterOptions>({
     categories: [],
     materials: [],
     colors: [],
-    priceRange: [0, maxPrice],
+    priceRange: [0, 1000],
     inStock: false,
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState("name");
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch("/api/products");
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data.map((p: any) => ({
+            ...p,
+            price: parseFloat(p.price),
+            originalPrice: p.original_price ? parseFloat(p.original_price) : undefined,
+            image: p.images?.[0] || heroJewelry,
+            inStock: p.in_stock ?? p.inStock ?? true,
+          })));
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const maxPrice = useMemo(() => {
+    if (products.length === 0) return 1000;
+    return Math.max(...products.map(p => p.price), 1000);
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
-    let filtered = products;
+    let filtered = [...products];
 
     // Search filter
     if (searchTerm) {
@@ -132,20 +90,20 @@ export default function ShopJewelry() {
 
     // Material filter
     if (filters.materials.length > 0) {
-      filtered = filtered.filter(product => 
+      filtered = filtered.filter(product =>
         product.material && filters.materials.includes(product.material)
       );
     }
 
     // Color filter
     if (filters.colors.length > 0) {
-      filtered = filtered.filter(product => 
+      filtered = filtered.filter(product =>
         product.color && filters.colors.includes(product.color)
       );
     }
 
     // Price range filter
-    filtered = filtered.filter(product => 
+    filtered = filtered.filter(product =>
       product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1]
     );
 
@@ -171,7 +129,7 @@ export default function ShopJewelry() {
     });
 
     return filtered;
-  }, [searchTerm, filters, sortBy]);
+  }, [products, searchTerm, filters, sortBy]);
 
   return (
     <Layout>
@@ -212,7 +170,7 @@ export default function ShopJewelry() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mt-8 mb-8">
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"} found
+                {isLoading ? "Loading..." : `${filteredProducts.length} ${filteredProducts.length === 1 ? "product" : "products"} found`}
               </span>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-48">
@@ -249,47 +207,57 @@ export default function ShopJewelry() {
           </div>
 
           {/* Products Grid */}
-          <div className={`grid gap-8 ${
-            viewMode === "grid" 
-              ? "sm:grid-cols-2 lg:grid-cols-3" 
-              : "grid-cols-1 max-w-2xl"
-          }`}>
-            {filteredProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </div>
-
-          {filteredProducts.length === 0 && (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-16">
-              <SlidersHorizontal className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-xl font-serif font-semibold text-foreground mb-2">
-                No products found
-              </h3>
-              <p className="text-muted-foreground text-lg mb-6">
-                Try adjusting your search or filters to find what you're looking for.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchTerm("");
-                  setFilters({
-                    categories: [],
-                    materials: [],
-                    colors: [],
-                    priceRange: [0, maxPrice],
-                    inStock: false,
-                  });
-                }}
-              >
-                Clear all filters
-              </Button>
+              <div className="bg-secondary/50 rounded-2xl p-8 max-w-md mx-auto">
+                <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-xl font-serif font-semibold text-foreground mb-2">
+                  {products.length === 0 ? "No Products Yet" : "No products found"}
+                </h3>
+                <p className="text-muted-foreground text-lg mb-6">
+                  {products.length === 0
+                    ? "Check back soon for new jewelry!"
+                    : "Try adjusting your search or filters to find what you're looking for."}
+                </p>
+                {products.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setFilters({
+                        categories: [],
+                        materials: [],
+                        colors: [],
+                        priceRange: [0, maxPrice],
+                        inStock: false,
+                      });
+                    }}
+                  >
+                    Clear all filters
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className={`grid gap-8 ${
+              viewMode === "grid"
+                ? "sm:grid-cols-2 lg:grid-cols-3"
+                : "grid-cols-1 max-w-2xl"
+            }`}>
+              {filteredProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
             </div>
           )}
         </div>

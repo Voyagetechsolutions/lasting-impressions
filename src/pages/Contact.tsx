@@ -20,17 +20,34 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Message sent!",
-      description: "Thank you for reaching out. We'll get back to you within 24 hours.",
-    });
-    
-    setFormData({ name: "", email: "", subject: "", message: "" });
-    setIsSubmitting(false);
+
+    try {
+      const response = await fetch('/api/contact-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Message sent!",
+          description: "Thank you for reaching out. We'll get back to you within 24 hours.",
+        });
+        setFormData({ name: "", email: "", subject: "", message: "" });
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -68,7 +85,7 @@ export default function Contact() {
               <h2 className="text-2xl md:text-3xl font-serif font-semibold text-foreground mb-8">
                 Send Us a Message
               </h2>
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div>
@@ -100,7 +117,7 @@ export default function Contact() {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
                     Subject
@@ -115,7 +132,7 @@ export default function Contact() {
                     className="h-12"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
                     Message
@@ -130,7 +147,7 @@ export default function Contact() {
                     className="resize-none"
                   />
                 </div>
-                
+
                 <Button type="submit" variant="hero" size="lg" disabled={isSubmitting} className="gap-2">
                   {isSubmitting ? "Sending..." : "Send Message"}
                   <Send className="h-4 w-4" />
@@ -163,8 +180,9 @@ export default function Contact() {
                   <div>
                     <h3 className="font-medium text-foreground mb-1">Address</h3>
                     <p className="text-muted-foreground">
-                      123 Artisan Lane<br />
-                      Creative District, CA 90210
+                      8 Simon Street<br />
+                      Rustivia, Germiston 1401<br />
+                      Gauteng, South Africa
                     </p>
                   </div>
                 </div>
@@ -175,7 +193,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground mb-1">Phone</h3>
-                    <p className="text-muted-foreground">(555) 123-4567</p>
+                    <p className="text-muted-foreground">076 852 0695</p>
                   </div>
                 </div>
 
@@ -185,7 +203,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground mb-1">Email</h3>
-                    <p className="text-muted-foreground">hello@lastingimpressions.com</p>
+                    <p className="text-muted-foreground">lastingimpressions2005@gmail.com</p>
                   </div>
                 </div>
 
@@ -195,10 +213,8 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground mb-1">Studio Hours</h3>
-                    <div className="text-muted-foreground space-y-1">
-                      <p>Tuesday - Friday: 10:00 AM - 6:00 PM</p>
-                      <p>Saturday: 10:00 AM - 4:00 PM</p>
-                      <p>Sunday - Monday: Closed</p>
+                    <div className="text-muted-foreground">
+                      <p>By Appointment</p>
                     </div>
                   </div>
                 </div>
