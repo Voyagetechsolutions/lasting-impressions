@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Migrate Express backend to Vercel Serverless Functions\n\nReplace the separate Express server \\(server/\\) with Vercel Serverless\nFunctions \\(api/\\) so the frontend and API deploy as a single project.\nKey changes:\n- Port all Express routes to api/ serverless functions\n- Replace multer disk uploads with @vercel/blob\n- Update all frontend API URLs from http://localhost:3001/api to /api\n- AdminContext now uploads images to Vercel Blob then sends JSON\n- Add vercel.json with SPA rewrites\n- Move setup-db.js to scripts/\n- Add server deps to root package.json\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}
