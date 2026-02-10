@@ -1,30 +1,17 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import supabase from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const router = express.Router();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '../../public/uploads'));
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
+// Configure multer for memory storage
 const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         const allowedTypes = /jpeg|jpg|png|gif|webp/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const extname = allowedTypes.test(file.originalname.toLowerCase());
         const mimetype = allowedTypes.test(file.mimetype);
         if (extname && mimetype) {
             return cb(null, true);
@@ -32,8 +19,6 @@ const upload = multer({
         cb(new Error('Only image files are allowed'));
     }
 });
-
-const router = express.Router();
 
 // Get all products (public)
 router.get('/', async (req, res) => {
@@ -78,7 +63,27 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
             return res.status(400).json({ error: 'Name and price are required' });
         }
 
-        const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+        // Upload images to Supabase Storage
+        const imageUrls = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.originalname}`;
+                const { data, error } = await supabase.storage
+                    .from('product-images')
+                    .upload(fileName, file.buffer, {
+                        contentType: file.mimetype,
+                        upsert: false
+                    });
+
+                if (error) throw error;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('product-images')
+                    .getPublicUrl(fileName);
+
+                imageUrls.push(publicUrl);
+            }
+        }
 
         const { data, error } = await supabase
             .from('products')
@@ -94,7 +99,7 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
                 quantity,
                 stock: parseInt(stock) || 0,
                 in_stock: (inStock !== undefined ? (inStock === 'true' || inStock === true) : (in_stock === 'true' || in_stock === true)),
-                images
+                images: imageUrls
             })
             .select()
             .single();
@@ -113,8 +118,27 @@ router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res
         const { id } = req.params;
         const updates = req.body;
 
-        // Get new uploaded images
-        const newImages = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+        // Upload new images to Supabase Storage
+        const newImageUrls = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.originalname}`;
+                const { data, error } = await supabase.storage
+                    .from('product-images')
+                    .upload(fileName, file.buffer, {
+                        contentType: file.mimetype,
+                        upsert: false
+                    });
+
+                if (error) throw error;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('product-images')
+                    .getPublicUrl(fileName);
+
+                newImageUrls.push(publicUrl);
+            }
+        }
 
         // Combine with existing images if provided
         let allImages = [];
@@ -125,11 +149,13 @@ router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res
                 allImages = Array.isArray(updates.existingImages) ? updates.existingImages : [updates.existingImages];
             }
         }
-        allImages = [...allImages, ...newImages];
+        allImages = [...allImages, ...newImageUrls];
 
         if (allImages.length > 0) {
             updates.images = allImages;
         }
+
+        delete updates.existingImages;
 
         const { data, error } = await supabase
             .from('products')
