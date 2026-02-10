@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingBag, User } from "lucide-react";
+import { Menu, X, ShoppingBag, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { useCustomer } from "@/contexts/CustomerAuthContext";
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -19,6 +20,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { totalItems, setIsOpen: setCartOpen } = useCart();
+  const { user: customer, isAuthenticated: isCustomerLoggedIn, logout: customerLogout } = useCustomer();
   const navigate = useNavigate();
 
   return (
@@ -59,9 +61,22 @@ export function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin/login")}>
-              <User className="h-5 w-5" />
-            </Button>
+            {isCustomerLoggedIn ? (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={() => navigate("/account")} className="text-sm">
+                  <User className="h-4 w-4 mr-1" />
+                  {customer?.name?.split(" ")[0]}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => { customerLogout(); navigate("/"); }}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => navigate("/login")} className="text-sm">
+                <User className="h-4 w-4 mr-1" />
+                Sign In
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -111,10 +126,17 @@ export function Navbar() {
                   </Link>
                 ))}
                 <div className="flex items-center gap-4 pt-4 px-4">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => { setIsOpen(false); navigate("/admin/login"); }}>
-                    <User className="h-4 w-4 mr-2" />
-                    Admin
-                  </Button>
+                  {isCustomerLoggedIn ? (
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => { setIsOpen(false); navigate("/account"); }}>
+                      <User className="h-4 w-4 mr-2" />
+                      Account
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => { setIsOpen(false); navigate("/login"); }}>
+                      <User className="h-4 w-4 mr-2" />
+                      Sign In
+                    </Button>
+                  )}
                   <Button
                     variant="default"
                     size="sm"

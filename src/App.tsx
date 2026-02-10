@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { CustomerAuthProvider } from "@/contexts/CustomerAuthContext";
 import Index from "./pages/Index";
 import ShopJewelry from "./pages/ShopJewelry";
 import ShopBeads from "./pages/ShopBeads";
@@ -20,6 +21,9 @@ import OrderSuccess from "./pages/OrderSuccess";
 import CustomBeadsRequest from "./pages/CustomBeadsRequest";
 import AdminPanel from "./pages/AdminPanel";
 import AdminLogin from "./pages/AdminLogin";
+import CustomerLogin from "./pages/CustomerLogin";
+import CustomerSignup from "./pages/CustomerSignup";
+import CustomerAccount from "./pages/CustomerAccount";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,41 +50,46 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <AdminProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/shop/jewelry" element={<ShopJewelry />} />
-                <Route path="/shop/beads" element={<ShopBeads />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/classes" element={<Classes />} />
-                <Route path="/classes/:id/book" element={<ClassBooking />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/order-success" element={<OrderSuccess />} />
-                <Route path="/custom-beads" element={<CustomBeadsRequest />} />
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminPanel />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </CartProvider>
-      </AdminProvider>
+      <CustomerAuthProvider>
+        <AdminProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/shop/jewelry" element={<ShopJewelry />} />
+                  <Route path="/shop/beads" element={<ShopBeads />} />
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/classes" element={<Classes />} />
+                  <Route path="/classes/:id/book" element={<ClassBooking />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/order-success" element={<OrderSuccess />} />
+                  <Route path="/custom-beads" element={<CustomBeadsRequest />} />
+                  <Route path="/login" element={<CustomerLogin />} />
+                  <Route path="/signup" element={<CustomerSignup />} />
+                  <Route path="/account" element={<CustomerAccount />} />
+                  <Route path="/admin/login" element={<AdminLogin />} />
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute>
+                        <AdminPanel />
+                      </ProtectedRoute>
+                    }
+                  />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </CartProvider>
+        </AdminProvider>
+      </CustomerAuthProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

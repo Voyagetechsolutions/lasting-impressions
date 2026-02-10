@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CreditCard, Truck, MapPin, Phone, Mail, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Layout } from "@/components/layout/Layout";
 import { useCart } from "@/contexts/CartContext";
+import { useCustomer } from "@/contexts/CustomerAuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface ShippingInfo {
@@ -31,13 +32,14 @@ interface PaymentInfo {
 
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
+  const { user: customer, isAuthenticated: isCustomerLoggedIn, token: customerToken } = useCustomer();
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const [shippingMethod, setShippingMethod] = useState("delivery");
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     firstName: "",
     lastName: "",
@@ -48,6 +50,20 @@ export default function Checkout() {
     province: "",
     postalCode: "",
   });
+
+  // Pre-fill from customer profile
+  useEffect(() => {
+    if (isCustomerLoggedIn && customer) {
+      const nameParts = customer.name.split(" ");
+      setShippingInfo(prev => ({
+        ...prev,
+        firstName: prev.firstName || nameParts[0] || "",
+        lastName: prev.lastName || nameParts.slice(1).join(" ") || "",
+        email: prev.email || customer.email || "",
+        phone: prev.phone || customer.phone || "",
+      }));
+    }
+  }, [isCustomerLoggedIn, customer]);
   
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
     cardNumber: "",
@@ -115,26 +131,75 @@ export default function Checkout() {
     setIsProcessing(true);
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Clear cart and redirect to success page
+      // Simulate payment processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Create order via API
+      const orderPayload: any = {
+        customer: {
+          firstName: shippingInfo.firstName,
+          lastName: shippingInfo.lastName,
+          email: shippingInfo.email,
+          phone: shippingInfo.phone,
+        },
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          variant: item.variant,
+          image: item.image,
+        })),
+        total,
+        shippingMethod,
+        shippingAddress: shippingMethod === "delivery" ? {
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          province: shippingInfo.province,
+          postalCode: shippingInfo.postalCode,
+        } : null,
+        paymentMethod,
+      };
+
+      if (isCustomerLoggedIn && customer) {
+        orderPayload.customerId = customer.id;
+      }
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (isCustomerLoggedIn && customerToken) {
+        headers["Authorization"] = `Bearer ${customerToken}`;
+      }
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(orderPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create order");
+      }
+
+      const newOrder = await response.json();
+
       clearCart();
-      
+
       toast({
         title: "Order Successful!",
         description: "Your payment has been processed and order confirmed.",
       });
-      
+
       navigate("/order-success", {
         state: {
-          orderNumber: `LI${Date.now()}`,
+          orderNumber: newOrder.id ? newOrder.id.slice(0, 8).toUpperCase() : `LI${Date.now()}`,
           total,
           shippingMethod,
           shippingInfo,
         }
       });
-      
+
     } catch (error) {
       toast({
         title: "Payment Failed",
@@ -171,6 +236,18 @@ export default function Checkout() {
             {/* Checkout Form */}
             <div className="lg:col-span-2">
               <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Guest sign-in prompt */}
+                {!isCustomerLoggedIn && (
+                  <div className="bg-secondary/30 rounded-xl p-4 flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Have an account? Sign in to pre-fill your info and track this order.
+                    </p>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/login">Sign In</Link>
+                    </Button>
+                  </div>
+                )}
+
                 {/* Shipping Method */}
                 <div className="bg-card rounded-xl p-6 shadow-elegant">
                   <h2 className="font-serif text-xl font-semibold mb-4 flex items-center gap-2">

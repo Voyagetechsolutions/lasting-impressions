@@ -155,19 +155,26 @@ async function setupDatabase() {
     `;
         console.log('Custom requests table created');
 
-        // Check if admin user exists, if not create one
-        const existingAdmin = await sql`SELECT * FROM users WHERE email = 'admin@lastingimpressions.com' LIMIT 1`;
+        // Add phone column to users (idempotent)
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50)`;
+        console.log('Users phone column ensured');
 
-        if (existingAdmin.length === 0) {
-            const hashedPassword = await bcrypt.hash('admin123', 10);
-            await sql`
-        INSERT INTO users (email, password_hash, name, role)
-        VALUES ('admin@lastingimpressions.com', ${hashedPassword}, 'Admin', 'admin')
-      `;
-            console.log('Default admin user created (email: admin@lastingimpressions.com, password: admin123)');
-        } else {
-            console.log('Admin user already exists');
-        }
+        // Add customer_id to orders (idempotent)
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES users(id) ON DELETE SET NULL`;
+        console.log('Orders customer_id column ensured');
+
+        // Add customer_id to bookings (idempotent)
+        await sql`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES users(id) ON DELETE SET NULL`;
+        console.log('Bookings customer_id column ensured');
+
+        // Upsert admin user — always resets password so re-running fixes login
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        await sql`
+          INSERT INTO users (email, password_hash, name, role)
+          VALUES ('admin@lastingimpressions.com', ${hashedPassword}, 'Admin', 'admin')
+          ON CONFLICT (email) DO UPDATE SET password_hash = ${hashedPassword}, updated_at = NOW()
+        `;
+        console.log('Admin user upserted (email: admin@lastingimpressions.com, password: admin123)');
 
         console.log('\nDatabase setup completed successfully!');
     } catch (error) {

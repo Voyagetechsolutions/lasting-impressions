@@ -1,5 +1,5 @@
 import sql from '../_lib/db.js';
-import { requireAuth } from '../_lib/auth.js';
+import { requireAuth, authenticate } from '../_lib/auth.js';
 
 export default async function handler(req, res) {
   const id = req.query.params?.[0];
@@ -47,6 +47,42 @@ export default async function handler(req, res) {
 }
 
 async function getOrders(req, res) {
+  const { customer_id } = req.query;
+
+  // If customer_id is provided, authenticate the customer and return only their orders
+  if (customer_id) {
+    const user = authenticate(req);
+    if (!user || user.id !== customer_id) {
+      return res.status(401).json({ error: 'Access denied' });
+    }
+
+    try {
+      const orders = await sql`SELECT * FROM orders WHERE customer_id = ${customer_id} ORDER BY created_at DESC`;
+      const formattedOrders = orders.map(order => ({
+        id: order.id,
+        customer: {
+          firstName: order.customer_first_name,
+          lastName: order.customer_last_name,
+          email: order.customer_email,
+          phone: order.customer_phone,
+        },
+        items: order.items,
+        total: parseFloat(order.total),
+        status: order.status,
+        shippingMethod: order.shipping_method,
+        shippingAddress: order.shipping_address,
+        paymentMethod: order.payment_method,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at,
+      }));
+      return res.json(formattedOrders);
+    } catch (error) {
+      console.error('Get customer orders error:', error);
+      return res.status(500).json({ error: 'Server error' });
+    }
+  }
+
+  // Admin: return all orders
   const user = requireAuth(req, res);
   if (!user) return;
 
@@ -80,16 +116,25 @@ async function getOrders(req, res) {
 
 async function createOrder(req, res) {
   try {
-    const { customer, items, total, shippingMethod, shippingAddress, paymentMethod } = req.body;
+    const { customer, items, total, shippingMethod, shippingAddress, paymentMethod, customerId } = req.body;
 
     if (!customer || !items || !total) {
       return res.status(400).json({ error: 'Customer, items, and total are required' });
     }
 
+    // If customerId is provided, verify the token matches
+    let verifiedCustomerId = null;
+    if (customerId) {
+      const user = authenticate(req);
+      if (user && user.id === customerId) {
+        verifiedCustomerId = customerId;
+      }
+    }
+
     const newOrder = await sql`
       INSERT INTO orders (
         customer_first_name, customer_last_name, customer_email, customer_phone,
-        items, total, shipping_method, shipping_address, payment_method
+        items, total, shipping_method, shipping_address, payment_method, customer_id
       )
       VALUES (
         ${customer.firstName},
@@ -100,7 +145,8 @@ async function createOrder(req, res) {
         ${parseFloat(total)},
         ${shippingMethod || null},
         ${shippingAddress ? JSON.stringify(shippingAddress) : null},
-        ${paymentMethod || null}
+        ${paymentMethod || null},
+        ${verifiedCustomerId}
       )
       RETURNING *
     `;
