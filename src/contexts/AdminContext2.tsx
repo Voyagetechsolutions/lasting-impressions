@@ -21,11 +21,29 @@ export interface Product {
   updatedAt: string;
 }
 
+export interface ClassItem {
+  id: string;
+  title: string;
+  description: string;
+  level: string;
+  date: string;
+  time: string;
+  duration: string;
+  price: number;
+  max_participants: number;
+  spots_left: number;
+  image_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AdminContextType {
   products: Product[];
   loadProducts: () => Promise<void>;
   addProduct: (product: FormData) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  classes: ClassItem[];
+  loadClasses: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -33,6 +51,7 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -120,12 +139,27 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loadClasses = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('classes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setClasses(data || []);
+    } catch (error) {
+      console.error("Failed to load classes:", error);
+    }
+  }, []);
+
   useEffect(() => {
     loadProducts();
-  }, [loadProducts]);
+    loadClasses();
+  }, [loadProducts, loadClasses]);
 
   return (
-    <AdminContext.Provider value={{ products, loadProducts, addProduct, deleteProduct, isLoading }}>
+    <AdminContext.Provider value={{ products, loadProducts, addProduct, deleteProduct, classes, loadClasses, isLoading }}>
       {children}
     </AdminContext.Provider>
   );
