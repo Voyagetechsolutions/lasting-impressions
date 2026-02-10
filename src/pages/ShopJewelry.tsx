@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductSearch, FilterOptions } from "@/components/shop/ProductSearch";
+import { supabase } from "@/lib/supabase";
 import heroJewelry from "@/assets/hero-jewelry.jpg";
 
 interface Product {
@@ -44,17 +45,20 @@ export default function ShopJewelry() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products");
-        if (response.ok) {
-          const data = await response.json();
-          setProducts(data.map((p: any) => ({
-            ...p,
-            price: parseFloat(p.price),
-            originalPrice: p.original_price ? parseFloat(p.original_price) : undefined,
-            image: p.images?.[0] || heroJewelry,
-            inStock: p.in_stock ?? p.inStock ?? true,
-          })));
-        }
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        setProducts(data.map((p: any) => ({
+          ...p,
+          price: parseFloat(p.price),
+          originalPrice: p.original_price ? parseFloat(p.original_price) : undefined,
+          image: p.images?.[0] || heroJewelry,
+          inStock: p.in_stock,
+        })));
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {

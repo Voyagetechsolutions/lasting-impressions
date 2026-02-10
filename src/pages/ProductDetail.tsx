@@ -5,6 +5,7 @@ import { Star, Heart, Minus, Plus, Truck, Shield, RotateCcw } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/lib/supabase";
 
 interface Product {
   id: string;
@@ -32,15 +33,19 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`/api/products/${id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setProduct({
-            ...data,
-            price: parseFloat(data.price),
-            original_price: data.original_price ? parseFloat(data.original_price) : undefined,
-          });
-        }
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        setProduct({
+          ...data,
+          price: parseFloat(data.price),
+          original_price: data.original_price ? parseFloat(data.original_price) : undefined,
+        });
       } catch (error) {
         console.error('Failed to fetch product:', error);
       } finally {
