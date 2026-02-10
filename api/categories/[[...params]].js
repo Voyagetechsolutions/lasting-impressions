@@ -38,7 +38,7 @@ async function getCategories(req, res) {
 }
 
 async function createCategory(req, res) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -65,7 +65,7 @@ async function createCategory(req, res) {
 }
 
 async function updateCategory(req, res, id) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -92,7 +92,7 @@ async function updateCategory(req, res, id) {
 }
 
 async function deleteCategory(req, res, id) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {

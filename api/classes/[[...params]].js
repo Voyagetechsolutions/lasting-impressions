@@ -59,7 +59,7 @@ async function getClasses(req, res) {
 }
 
 async function createClass(req, res) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -126,7 +126,7 @@ async function getClass(req, res, id) {
 }
 
 async function updateClass(req, res, id) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -163,7 +163,7 @@ async function updateClass(req, res, id) {
 }
 
 async function deleteClass(req, res, id) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {

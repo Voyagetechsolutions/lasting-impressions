@@ -40,7 +40,7 @@ async function getProducts(req, res) {
 }
 
 async function createProduct(req, res) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -94,7 +94,7 @@ async function getProduct(req, res, id) {
 }
 
 async function updateProduct(req, res, id) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -133,7 +133,7 @@ async function updateProduct(req, res, id) {
 }
 
 async function deleteProduct(req, res, id) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {

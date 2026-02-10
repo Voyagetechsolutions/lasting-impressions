@@ -1,6 +1,4 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import sql from '../_lib/db.js';
+import supabaseAdmin from '../_lib/supabase.js';
 import { requireAuth } from '../_lib/auth.js';
 
 export default async function handler(req, res) {
@@ -24,6 +22,7 @@ export default async function handler(req, res) {
   }
 }
 
+// Admin login — signs in via Supabase, checks role === 'admin'
 async function handleLogin(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -36,32 +35,33 @@ async function handleLogin(req, res) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const users = await sql`SELECT * FROM users WHERE email = ${email} LIMIT 1`;
+    const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (users.length === 0) {
+    if (error || !data.session) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const user = users[0];
-    const validPassword = await bcrypt.compare(password, user.password_hash);
+    // Check that the user is an admin
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
 
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    if (!profile || profile.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
     }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
 
     res.json({
-      token,
+      token: data.session.access_token,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
+        id: data.user.id,
+        email: data.user.email,
+        name: profile.name,
+        role: profile.role,
       },
     });
   } catch (error) {
@@ -70,35 +70,35 @@ async function handleLogin(req, res) {
   }
 }
 
+// Admin /me endpoint
 async function handleMe(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
-  try {
-    const users = await sql`SELECT id, email, name, role FROM users WHERE id = ${user.id} LIMIT 1`;
-
-    if (users.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json(users[0]);
-  } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
+  res.json({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+  });
 }
 
+// Admin register (requires existing admin auth)
 async function handleRegister(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
+
+  if (user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
 
   try {
     const { email, password, name } = req.body;
@@ -107,27 +107,36 @@ async function handleRegister(req, res) {
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
 
-    const existingUser = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name, role: 'admin' },
+    });
 
-    if (existingUser.length > 0) {
-      return res.status(400).json({ error: 'User with this email already exists' });
+    if (error) {
+      return res.status(400).json({ error: error.message });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Update profile role to admin
+    await supabaseAdmin
+      .from('profiles')
+      .update({ role: 'admin', name })
+      .eq('id', data.user.id);
 
-    const newUser = await sql`
-      INSERT INTO users (email, password_hash, name, role)
-      VALUES (${email}, ${hashedPassword}, ${name}, 'admin')
-      RETURNING id, email, name, role
-    `;
-
-    res.status(201).json(newUser[0]);
+    res.status(201).json({
+      id: data.user.id,
+      email: data.user.email,
+      name,
+      role: 'admin',
+    });
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 }
 
+// Customer signup — public, no auth required
 async function handleCustomerSignup(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -140,29 +149,57 @@ async function handleCustomerSignup(req, res) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
-    const existingUser = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name, role: 'customer' },
+    });
 
-    if (existingUser.length > 0) {
-      return res.status(400).json({ error: 'An account with this email already exists' });
+    if (error) {
+      if (error.message.includes('already been registered')) {
+        return res.status(400).json({ error: 'An account with this email already exists' });
+      }
+      return res.status(400).json({ error: error.message });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Update profile with phone if provided
+    if (phone) {
+      await supabaseAdmin
+        .from('profiles')
+        .update({ phone })
+        .eq('id', data.user.id);
+    }
 
-    const newUser = await sql`
-      INSERT INTO users (email, password_hash, name, role, phone)
-      VALUES (${email}, ${hashedPassword}, ${name}, 'customer', ${phone || null})
-      RETURNING id, email, name, role, phone
-    `;
+    // Sign in to get a session token
+    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    const token = jwt.sign(
-      { id: newUser[0].id, email: newUser[0].email, role: 'customer' },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    if (signInError || !signInData.session) {
+      // User created but couldn't sign in — still return success
+      return res.status(201).json({
+        token: null,
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          name,
+          role: 'customer',
+          phone: phone || null,
+        },
+      });
+    }
 
     res.status(201).json({
-      token,
-      user: newUser[0],
+      token: signInData.session.access_token,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name,
+        role: 'customer',
+        phone: phone || null,
+      },
     });
   } catch (error) {
     console.error('Customer signup error:', error);
@@ -170,6 +207,7 @@ async function handleCustomerSignup(req, res) {
   }
 }
 
+// Customer login
 async function handleCustomerLogin(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -182,33 +220,34 @@ async function handleCustomerLogin(req, res) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const users = await sql`SELECT * FROM users WHERE email = ${email} AND role = 'customer' LIMIT 1`;
+    const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (users.length === 0) {
+    if (error || !data.session) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const user = users[0];
-    const validPassword = await bcrypt.compare(password, user.password_hash);
+    // Fetch profile
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
 
-    if (!validPassword) {
+    if (!profile || profile.role !== 'customer') {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
 
     res.json({
-      token,
+      token: data.session.access_token,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        phone: user.phone,
+        id: data.user.id,
+        email: data.user.email,
+        name: profile.name,
+        role: profile.role,
+        phone: profile.phone,
       },
     });
   } catch (error) {
@@ -217,31 +256,32 @@ async function handleCustomerLogin(req, res) {
   }
 }
 
+// Customer /me — returns profile + orders + bookings
 async function handleCustomerMe(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
+  if (user.role !== 'customer') {
+    return res.status(403).json({ error: 'Customer access only' });
+  }
+
   try {
-    const users = await sql`SELECT id, email, name, role, phone FROM users WHERE id = ${user.id} AND role = 'customer' LIMIT 1`;
+    // Orders and bookings are in Neon — import sql dynamically
+    const { default: sql } = await import('../_lib/db.js');
 
-    if (users.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const customer = users[0];
-
-    // Fetch customer's orders
-    const orders = await sql`SELECT * FROM orders WHERE customer_id = ${customer.id} ORDER BY created_at DESC`;
-
-    // Fetch customer's bookings
-    const bookings = await sql`SELECT * FROM bookings WHERE customer_id = ${customer.id} ORDER BY created_at DESC`;
+    const orders = await sql`SELECT * FROM orders WHERE customer_id = ${user.id} ORDER BY created_at DESC`;
+    const bookings = await sql`SELECT * FROM bookings WHERE customer_id = ${user.id} ORDER BY created_at DESC`;
 
     res.json({
-      ...customer,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      phone: user.phone,
       orders: orders.map(order => ({
         id: order.id,
         items: order.items,

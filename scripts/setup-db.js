@@ -1,28 +1,23 @@
 import { neon } from '@neondatabase/serverless';
-import bcrypt from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
 
 const sql = neon(process.env.DATABASE_URL);
 
+const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 async function setupDatabase() {
-    console.log('Setting up database...');
+    console.log('Setting up Neon database (data) + Supabase (auth)...\n');
 
     try {
-        // Create users table (for admin authentication)
-        await sql`
-      CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        role VARCHAR(50) DEFAULT 'admin',
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      )
-    `;
-        console.log('Users table created');
+        // =============================================
+        // NEON: Create application tables
+        // =============================================
 
         // Create categories table
         await sql`
@@ -34,7 +29,7 @@ async function setupDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
-        console.log('Categories table created');
+        console.log('[Neon] Categories table created');
 
         // Create products table
         await sql`
@@ -56,7 +51,7 @@ async function setupDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
-        console.log('Products table created');
+        console.log('[Neon] Products table created');
 
         // Create orders table
         await sql`
@@ -76,7 +71,7 @@ async function setupDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
-        console.log('Orders table created');
+        console.log('[Neon] Orders table created');
 
         // Create classes table
         await sql`
@@ -98,7 +93,7 @@ async function setupDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
-        console.log('Classes table created');
+        console.log('[Neon] Classes table created');
 
         // Create bookings table
         await sql`
@@ -119,7 +114,7 @@ async function setupDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
-        console.log('Bookings table created');
+        console.log('[Neon] Bookings table created');
 
         // Create contact_messages table
         await sql`
@@ -134,7 +129,7 @@ async function setupDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
-        console.log('Contact messages table created');
+        console.log('[Neon] Contact messages table created');
 
         // Create custom_requests table
         await sql`
@@ -153,32 +148,73 @@ async function setupDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
-        console.log('Custom requests table created');
+        console.log('[Neon] Custom requests table created');
 
-        // Add phone column to users (idempotent)
-        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50)`;
-        console.log('Users phone column ensured');
+        // Add customer_id columns (Supabase UUIDs, no FK since cross-database)
+        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id UUID`;
+        console.log('[Neon] Orders customer_id column ensured');
 
-        // Add customer_id to orders (idempotent)
-        await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES users(id) ON DELETE SET NULL`;
-        console.log('Orders customer_id column ensured');
+        await sql`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS customer_id UUID`;
+        console.log('[Neon] Bookings customer_id column ensured');
 
-        // Add customer_id to bookings (idempotent)
-        await sql`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES users(id) ON DELETE SET NULL`;
-        console.log('Bookings customer_id column ensured');
+        console.log('\n[Neon] Database setup completed!\n');
 
-        // Upsert admin user — always resets password so re-running fixes login
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        await sql`
-          INSERT INTO users (email, password_hash, name, role)
-          VALUES ('admin@lastingimpressions.com', ${hashedPassword}, 'Admin', 'admin')
-          ON CONFLICT (email) DO UPDATE SET password_hash = ${hashedPassword}, updated_at = NOW()
-        `;
-        console.log('Admin user upserted (email: admin@lastingimpressions.com, password: admin123)');
+        // =============================================
+        // SUPABASE: Seed admin user
+        // =============================================
 
-        console.log('\nDatabase setup completed successfully!');
+        console.log('[Supabase] Setting up admin user...');
+
+        const adminEmail = 'admin@lastingimpressions.com';
+        const adminPassword = 'admin123';
+
+        // Check if admin already exists
+        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+        const existingAdmin = existingUsers?.users?.find(u => u.email === adminEmail);
+
+        if (existingAdmin) {
+            // Update password to reset it
+            await supabaseAdmin.auth.admin.updateUserById(existingAdmin.id, {
+                password: adminPassword,
+            });
+            // Ensure profile has admin role
+            await supabaseAdmin
+                .from('profiles')
+                .upsert({
+                    id: existingAdmin.id,
+                    email: adminEmail,
+                    name: 'Admin',
+                    role: 'admin',
+                });
+            console.log('[Supabase] Admin user password reset (email: admin@lastingimpressions.com, password: admin123)');
+        } else {
+            // Create new admin user
+            const { data, error } = await supabaseAdmin.auth.admin.createUser({
+                email: adminEmail,
+                password: adminPassword,
+                email_confirm: true,
+                user_metadata: { name: 'Admin', role: 'admin' },
+            });
+
+            if (error) {
+                console.error('[Supabase] Error creating admin:', error.message);
+            } else {
+                // Ensure profile has admin role (trigger should handle this, but be safe)
+                await supabaseAdmin
+                    .from('profiles')
+                    .upsert({
+                        id: data.user.id,
+                        email: adminEmail,
+                        name: 'Admin',
+                        role: 'admin',
+                    });
+                console.log('[Supabase] Admin user created (email: admin@lastingimpressions.com, password: admin123)');
+            }
+        }
+
+        console.log('\nSetup completed successfully!');
     } catch (error) {
-        console.error('Error setting up database:', error);
+        console.error('Error during setup:', error);
         process.exit(1);
     }
 }

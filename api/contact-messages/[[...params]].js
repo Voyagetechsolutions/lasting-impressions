@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 }
 
 async function getMessages(req, res) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -62,7 +62,7 @@ async function createMessage(req, res) {
 }
 
 async function updateMessage(req, res, id) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -88,7 +88,7 @@ async function updateMessage(req, res, id) {
 }
 
 async function deleteMessage(req, res, id) {
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {

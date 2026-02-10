@@ -10,7 +10,7 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const user = requireAuth(req, res);
+    const user = await requireAuth(req, res);
     if (!user) return;
 
     try {
@@ -51,7 +51,7 @@ async function getOrders(req, res) {
 
   // If customer_id is provided, authenticate the customer and return only their orders
   if (customer_id) {
-    const user = authenticate(req);
+    const user = await authenticate(req);
     if (!user || user.id !== customer_id) {
       return res.status(401).json({ error: 'Access denied' });
     }
@@ -83,7 +83,7 @@ async function getOrders(req, res) {
   }
 
   // Admin: return all orders
-  const user = requireAuth(req, res);
+  const user = await requireAuth(req, res);
   if (!user) return;
 
   try {
@@ -125,7 +125,7 @@ async function createOrder(req, res) {
     // If customerId is provided, verify the token matches
     let verifiedCustomerId = null;
     if (customerId) {
-      const user = authenticate(req);
+      const user = await authenticate(req);
       if (user && user.id === customerId) {
         verifiedCustomerId = customerId;
       }
