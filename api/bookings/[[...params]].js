@@ -2,13 +2,47 @@ import sql from '../_lib/db.js';
 import { requireAuth } from '../_lib/auth.js';
 
 export default async function handler(req, res) {
-  switch (req.method) {
-    case 'GET':
-      return getBookings(req, res);
-    case 'POST':
-      return createBooking(req, res);
-    default:
+  const id = req.query.params?.[0];
+
+  if (id) {
+    // Single booking routes: /api/bookings/:id
+    if (req.method !== 'PUT') {
       return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const user = requireAuth(req, res);
+    if (!user) return;
+
+    try {
+      const { status } = req.body;
+
+      const updated = await sql`
+        UPDATE bookings
+        SET status = ${status},
+            updated_at = NOW()
+        WHERE id = ${id}
+        RETURNING *
+      `;
+
+      if (updated.length === 0) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      res.json(updated[0]);
+    } catch (error) {
+      console.error('Update booking error:', error);
+      res.status(500).json({ error: 'Server error' });
+    }
+  } else {
+    // Collection routes: /api/bookings
+    switch (req.method) {
+      case 'GET':
+        return getBookings(req, res);
+      case 'POST':
+        return createBooking(req, res);
+      default:
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
   }
 }
 
