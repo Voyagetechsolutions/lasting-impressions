@@ -35,7 +35,11 @@ export default function ProductDetail() {
         const response = await fetch(`/api/products/${id}`);
         if (response.ok) {
           const data = await response.json();
-          setProduct(data);
+          setProduct({
+            ...data,
+            price: parseFloat(data.price),
+            original_price: data.original_price ? parseFloat(data.original_price) : undefined,
+          });
         }
       } catch (error) {
         console.error('Failed to fetch product:', error);
@@ -153,11 +157,11 @@ export default function ProductDetail() {
               {/* Price */}
               <div className="flex items-baseline gap-3 mb-6">
                 <span className="text-3xl font-semibold text-foreground">
-                  R{parseFloat(product.price).toFixed(2)}
+                  R{product.price.toFixed(2)}
                 </span>
                 {product.original_price && (
                   <span className="text-xl text-muted-foreground line-through">
-                    R{parseFloat(product.original_price).toFixed(2)}
+                    R{product.original_price.toFixed(2)}
                   </span>
                 )}
               </div>

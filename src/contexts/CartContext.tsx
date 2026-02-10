@@ -37,7 +37,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
     if (stored) {
       try {
-        setItems(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        // Ensure prices are numbers
+        setItems(parsed.map((item: CartItem) => ({
+          ...item,
+          price: parseFloat(item.price as any),
+          quantity: parseInt(item.quantity as any)
+        })));
       } catch (e) {
         console.error("Failed to parse cart data");
       }
@@ -64,7 +70,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return updated;
       }
 
-      return [...current, { ...item, quantity }];
+      return [...current, { ...item, price: parseFloat(item.price as any), quantity }];
     });
 
     toast({
