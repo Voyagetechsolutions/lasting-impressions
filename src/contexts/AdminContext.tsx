@@ -238,21 +238,52 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const addProduct = async (formData: FormData) => {
     try {
-      const response = await fetch(`${API_URL}/products`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: formData,
-      });
-      if (response.ok) {
-        await loadProducts();
-        toast({ title: "Product Added", description: "Product has been added to inventory." });
-      } else {
-        const error = await response.json();
-        toast({ title: "Error", description: error.error || "Failed to add product.", variant: "destructive" });
+      setIsLoading(true);
+      
+      // Upload images to Supabase Storage
+      const imageUrls: string[] = [];
+      const imageFiles = formData.getAll('images') as File[];
+      
+      for (const file of imageFiles) {
+        if (file instanceof File) {
+          const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(fileName, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('product-images')
+            .getPublicUrl(fileName);
+
+          imageUrls.push(publicUrl);
+        }
       }
+
+      // Insert product
+      const { error } = await supabase.from('products').insert({
+        name: formData.get('name'),
+        description: formData.get('description'),
+        price: parseFloat(formData.get('price') as string),
+        original_price: formData.get('originalPrice') ? parseFloat(formData.get('originalPrice') as string) : null,
+        category: formData.get('category'),
+        material: formData.get('material'),
+        color: formData.get('color'),
+        stock: parseInt(formData.get('stock') as string) || 0,
+        in_stock: formData.get('inStock') === 'true',
+        images: imageUrls
+      });
+
+      if (error) throw error;
+
+      await loadProducts();
+      toast({ title: "Product Added", description: "Product has been added to inventory." });
     } catch (error) {
       console.error("Failed to add product:", error);
       toast({ title: "Error", description: "Failed to add product.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
   };
 
