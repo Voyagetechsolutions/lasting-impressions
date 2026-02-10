@@ -78,11 +78,11 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-semibold text-foreground">
-              R{(product.price * 18.5).toFixed(2)}
+              R{product.price.toFixed(2)}
             </span>
             {product.originalPrice && (
               <span className="text-sm text-muted-foreground line-through">
-                R{(product.originalPrice * 18.5).toFixed(2)}
+                R{product.originalPrice.toFixed(2)}
               </span>
             )}
           </div>
