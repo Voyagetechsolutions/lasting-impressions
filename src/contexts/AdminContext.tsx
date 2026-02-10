@@ -42,8 +42,20 @@ interface AdminContextType {
   loadProducts: () => Promise<void>;
   addProduct: (product: FormData) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  updateProduct: (id: string, updates: FormData) => Promise<void>;
   classes: ClassItem[];
   loadClasses: () => Promise<void>;
+  categories: any[];
+  loadCategories: () => Promise<void>;
+  orders: any[];
+  loadOrders: () => Promise<void>;
+  bookings: any[];
+  loadBookings: () => Promise<void>;
+  customRequests: any[];
+  loadCustomRequests: () => Promise<void>;
+  contactMessages: any[];
+  loadContactMessages: () => Promise<void>;
+  getAnalytics: () => any;
   isLoading: boolean;
 }
 
@@ -52,6 +64,11 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [customRequests, setCustomRequests] = useState<any[]>([]);
+  const [contactMessages, setContactMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -153,13 +170,31 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateProduct = async () => {};
+  const loadCategories = async () => {};
+  const loadOrders = async () => {};
+  const loadBookings = async () => {};
+  const loadCustomRequests = async () => {};
+  const loadContactMessages = async () => {};
+  const getAnalytics = () => ({ totalRevenue: 0, totalOrders: 0, totalProducts: products.length, totalBookings: 0, recentOrders: [], lowStockProducts: [] });
+
   useEffect(() => {
     loadProducts();
     loadClasses();
   }, [loadProducts, loadClasses]);
 
   return (
-    <AdminContext.Provider value={{ products, loadProducts, addProduct, deleteProduct, classes, loadClasses, isLoading }}>
+    <AdminContext.Provider value={{ 
+      products, loadProducts, addProduct, deleteProduct, updateProduct,
+      classes, loadClasses,
+      categories, loadCategories,
+      orders, loadOrders,
+      bookings, loadBookings,
+      customRequests, loadCustomRequests,
+      contactMessages, loadContactMessages,
+      getAnalytics,
+      isLoading 
+    }}>
       {children}
     </AdminContext.Provider>
   );
