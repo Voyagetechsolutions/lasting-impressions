@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Star, Heart, Minus, Plus, Truck, Shield, RotateCcw } from "lucide-react";
+import { Heart, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { useCart } from "@/contexts/CartContext";
@@ -233,22 +233,6 @@ export default function ProductDetail() {
                 <Button variant="outline" size="xl">
                   <Heart className="h-5 w-5" />
                 </Button>
-              </div>
-
-              {/* Benefits */}
-              <div className="grid grid-cols-3 gap-4 py-6 border-t border-b border-border">
-                <div className="text-center">
-                  <Truck className="h-6 w-6 mx-auto mb-2 text-accent" />
-                  <p className="text-xs text-muted-foreground">Free Shipping</p>
-                </div>
-                <div className="text-center">
-                  <Shield className="h-6 w-6 mx-auto mb-2 text-accent" />
-                  <p className="text-xs text-muted-foreground">1 Year Warranty</p>
-                </div>
-                <div className="text-center">
-                  <RotateCcw className="h-6 w-6 mx-auto mb-2 text-accent" />
-                  <p className="text-xs text-muted-foreground">30-Day Returns</p>
-                </div>
               </div>
             </motion.div>
           </div>
