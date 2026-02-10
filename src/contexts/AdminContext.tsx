@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "./AuthContext";
+import { supabase } from "@/lib/supabase";
 
 const API_URL = "/api";
 
@@ -214,19 +215,22 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   // Products
   const loadProducts = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/products`);
-      if (response.ok) {
-        const data = await response.json();
-        setProducts(data.map((p: any) => ({
-          ...p,
-          price: parseFloat(p.price),
-          originalPrice: p.original_price ? parseFloat(p.original_price) : undefined,
-          inStock: p.in_stock,
-          image: p.images?.[0] || '',
-          createdAt: p.created_at,
-          updatedAt: p.updated_at,
-        })));
-      }
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setProducts(data.map((p: any) => ({
+        ...p,
+        price: parseFloat(p.price),
+        originalPrice: p.original_price ? parseFloat(p.original_price) : undefined,
+        inStock: p.in_stock,
+        image: p.images?.[0] || '',
+        createdAt: p.created_at,
+        updatedAt: p.updated_at,
+      })));
     } catch (error) {
       console.error("Failed to load products:", error);
     }
@@ -290,15 +294,18 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   // Categories
   const loadCategories = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/categories`);
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data.map((c: any) => ({
-          ...c,
-          createdAt: c.created_at,
-          updatedAt: c.updated_at,
-        })));
-      }
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setCategories(data.map((c: any) => ({
+        ...c,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+      })));
     } catch (error) {
       console.error("Failed to load categories:", error);
     }
