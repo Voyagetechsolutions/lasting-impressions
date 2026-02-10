@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import sql from '../db.js';
+import supabase from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,8 +38,13 @@ const router = express.Router();
 // Get all products (public)
 router.get('/', async (req, res) => {
     try {
-        const products = await sql`SELECT * FROM products ORDER BY created_at DESC`;
-        res.json(products);
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         console.error('Get products error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -50,13 +55,14 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const products = await sql`SELECT * FROM products WHERE id = ${id} LIMIT 1`;
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .eq('id', id)
+            .single();
 
-        if (products.length === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-
-        res.json(products[0]);
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         console.error('Get product error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -66,7 +72,7 @@ router.get('/:id', async (req, res) => {
 // Create product (protected)
 router.post('/', authenticateToken, upload.array('images', 5), async (req, res) => {
     try {
-        const { name, description, price, originalPrice, category, material, color, size, quantity, stock, inStock } = req.body;
+        const { name, description, price, originalPrice, original_price, category, material, color, size, quantity, stock, inStock, in_stock } = req.body;
 
         if (!name || !price) {
             return res.status(400).json({ error: 'Name and price are required' });
@@ -74,26 +80,27 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
 
         const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
 
-        const newProduct = await sql`
-      INSERT INTO products (name, description, price, original_price, category, material, color, size, quantity, stock, in_stock, images)
-      VALUES (
-        ${name},
-        ${description || null},
-        ${parseFloat(price)},
-        ${originalPrice ? parseFloat(originalPrice) : null},
-        ${category || null},
-        ${material || null},
-        ${color || null},
-        ${size || null},
-        ${quantity || null},
-        ${parseInt(stock) || 0},
-        ${inStock === 'true' || inStock === true},
-        ${images}
-      )
-      RETURNING *
-    `;
+        const { data, error } = await supabase
+            .from('products')
+            .insert({
+                name,
+                description,
+                price: parseFloat(price),
+                original_price: (originalPrice || original_price) ? parseFloat(originalPrice || original_price) : null,
+                category,
+                material,
+                color,
+                size,
+                quantity,
+                stock: parseInt(stock) || 0,
+                in_stock: (inStock !== undefined ? (inStock === 'true' || inStock === true) : (in_stock === 'true' || in_stock === true)),
+                images
+            })
+            .select()
+            .single();
 
-        res.status(201).json(newProduct[0]);
+        if (error) throw error;
+        res.status(201).json(data);
     } catch (error) {
         console.error('Create product error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -104,46 +111,35 @@ router.post('/', authenticateToken, upload.array('images', 5), async (req, res) 
 router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, price, originalPrice, category, material, color, size, quantity, stock, inStock, existingImages } = req.body;
+        const updates = req.body;
 
         // Get new uploaded images
         const newImages = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
 
         // Combine with existing images if provided
         let allImages = [];
-        if (existingImages) {
+        if (updates.existingImages) {
             try {
-                allImages = JSON.parse(existingImages);
+                allImages = JSON.parse(updates.existingImages);
             } catch (e) {
-                allImages = Array.isArray(existingImages) ? existingImages : [existingImages];
+                allImages = Array.isArray(updates.existingImages) ? updates.existingImages : [updates.existingImages];
             }
         }
         allImages = [...allImages, ...newImages];
 
-        const updated = await sql`
-      UPDATE products
-      SET name = COALESCE(${name}, name),
-          description = COALESCE(${description}, description),
-          price = COALESCE(${price ? parseFloat(price) : null}, price),
-          original_price = ${originalPrice ? parseFloat(originalPrice) : null},
-          category = COALESCE(${category}, category),
-          material = COALESCE(${material}, material),
-          color = COALESCE(${color}, color),
-          size = COALESCE(${size}, size),
-          quantity = COALESCE(${quantity}, quantity),
-          stock = COALESCE(${stock ? parseInt(stock) : null}, stock),
-          in_stock = COALESCE(${inStock !== undefined ? (inStock === 'true' || inStock === true) : null}, in_stock),
-          images = ${allImages.length > 0 ? allImages : null},
-          updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *
-    `;
-
-        if (updated.length === 0) {
-            return res.status(404).json({ error: 'Product not found' });
+        if (allImages.length > 0) {
+            updates.images = allImages;
         }
 
-        res.json(updated[0]);
+        const { data, error } = await supabase
+            .from('products')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         console.error('Update product error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -154,13 +150,12 @@ router.put('/:id', authenticateToken, upload.array('images', 5), async (req, res
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
+        const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', id);
 
-        const deleted = await sql`DELETE FROM products WHERE id = ${id} RETURNING *`;
-
-        if (deleted.length === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-
+        if (error) throw error;
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error('Delete product error:', error);

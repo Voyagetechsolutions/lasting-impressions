@@ -22,14 +22,22 @@ export default function AdminLogin() {
         e.preventDefault();
         setIsLoading(true);
 
-        const success = await login(email, password);
+        const result = await login(email, password);
 
-        if (success) {
-            toast({
-                title: "Login successful",
-                description: "Welcome to the admin panel!",
-            });
-            navigate("/admin");
+        if (result.success) {
+            if (result.role === 'admin') {
+                toast({
+                    title: "Login successful",
+                    description: "Welcome to the admin panel!",
+                });
+                navigate("/admin");
+            } else {
+                toast({
+                    title: "Access denied",
+                    description: "You don't have admin privileges.",
+                    variant: "destructive",
+                });
+            }
         } else {
             toast({
                 title: "Login failed",

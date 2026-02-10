@@ -232,51 +232,19 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const uploadImages = async (files: File[]): Promise<string[]> => {
-    const urls: string[] = [];
-    for (const file of files) {
-      const response = await fetch(`${API_URL}/upload?filename=${encodeURIComponent(file.name)}`, {
-        method: "POST",
-        headers: {
-          ...getAuthHeaders(),
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        urls.push(data.url);
-      }
-    }
-    return urls;
-  };
-
   const addProduct = async (formData: FormData) => {
     try {
-      // Upload images first
-      const imageFiles: File[] = [];
-      const entries = formData.getAll("images");
-      for (const entry of entries) {
-        if (entry instanceof File) imageFiles.push(entry);
-      }
-      const imageUrls = await uploadImages(imageFiles);
-
-      const productData: any = {};
-      for (const [key, value] of formData.entries()) {
-        if (key !== "images" && key !== "existingImages") {
-          productData[key] = value;
-        }
-      }
-      productData.images = imageUrls;
-
       const response = await fetch(`${API_URL}/products`, {
         method: "POST",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify(productData),
+        headers: getAuthHeaders(),
+        body: formData,
       });
       if (response.ok) {
         await loadProducts();
         toast({ title: "Product Added", description: "Product has been added to inventory." });
+      } else {
+        const error = await response.json();
+        toast({ title: "Error", description: error.error || "Failed to add product.", variant: "destructive" });
       }
     } catch (error) {
       console.error("Failed to add product:", error);
@@ -286,41 +254,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const updateProduct = async (id: string, formData: FormData) => {
     try {
-      // Upload new images first
-      const imageFiles: File[] = [];
-      const entries = formData.getAll("images");
-      for (const entry of entries) {
-        if (entry instanceof File) imageFiles.push(entry);
-      }
-      const newImageUrls = await uploadImages(imageFiles);
-
-      // Get existing images
-      let existingImages: string[] = [];
-      const existingImagesStr = formData.get("existingImages");
-      if (existingImagesStr) {
-        try {
-          existingImages = JSON.parse(existingImagesStr as string);
-        } catch {
-          existingImages = [];
-        }
-      }
-
-      const productData: any = {};
-      for (const [key, value] of formData.entries()) {
-        if (key !== "images" && key !== "existingImages") {
-          productData[key] = value;
-        }
-      }
-      productData.images = [...existingImages, ...newImageUrls];
-
       const response = await fetch(`${API_URL}/products/${id}`, {
         method: "PUT",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify(productData),
+        headers: getAuthHeaders(),
+        body: formData,
       });
       if (response.ok) {
         await loadProducts();
         toast({ title: "Product Updated", description: "Product has been updated." });
+      } else {
+        const error = await response.json();
+        toast({ title: "Error", description: error.error || "Failed to update product.", variant: "destructive" });
       }
     } catch (error) {
       console.error("Failed to update product:", error);

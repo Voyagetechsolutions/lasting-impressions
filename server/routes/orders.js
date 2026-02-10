@@ -1,5 +1,5 @@
 import express from 'express';
-import sql from '../db.js';
+import supabase from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -7,28 +7,17 @@ const router = express.Router();
 // Get all orders (protected)
 router.get('/', authenticateToken, async (req, res) => {
     try {
-        const orders = await sql`SELECT * FROM orders ORDER BY created_at DESC`;
-
-        // Transform to match frontend format
-        const formattedOrders = orders.map(order => ({
-            id: order.id,
-            customer: {
-                firstName: order.customer_first_name,
-                lastName: order.customer_last_name,
-                email: order.customer_email,
-                phone: order.customer_phone,
-            },
-            items: order.items,
-            total: parseFloat(order.total),
-            status: order.status,
-            shippingMethod: order.shipping_method,
-            shippingAddress: order.shipping_address,
-            paymentMethod: order.payment_method,
-            createdAt: order.created_at,
-            updatedAt: order.updated_at,
-        }));
-
-        res.json(formattedOrders);
+        const { email } = req.query;
+        
+        let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+        
+        if (email) {
+            query = query.eq('customer_email', email);
+        }
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         console.error('Get orders error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -44,26 +33,24 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Customer, items, and total are required' });
         }
 
-        const newOrder = await sql`
-      INSERT INTO orders (
-        customer_first_name, customer_last_name, customer_email, customer_phone,
-        items, total, shipping_method, shipping_address, payment_method
-      )
-      VALUES (
-        ${customer.firstName},
-        ${customer.lastName},
-        ${customer.email},
-        ${customer.phone || null},
-        ${JSON.stringify(items)},
-        ${parseFloat(total)},
-        ${shippingMethod || null},
-        ${shippingAddress ? JSON.stringify(shippingAddress) : null},
-        ${paymentMethod || null}
-      )
-      RETURNING *
-    `;
+        const { data, error } = await supabase
+            .from('orders')
+            .insert({
+                customer_first_name: customer.firstName,
+                customer_last_name: customer.lastName,
+                customer_email: customer.email,
+                customer_phone: customer.phone,
+                items,
+                total: parseFloat(total),
+                shipping_method: shippingMethod,
+                shipping_address: shippingAddress,
+                payment_method: paymentMethod
+            })
+            .select()
+            .single();
 
-        res.status(201).json(newOrder[0]);
+        if (error) throw error;
+        res.status(201).json(data);
     } catch (error) {
         console.error('Create order error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -76,19 +63,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        const updated = await sql`
-      UPDATE orders
-      SET status = ${status},
-          updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *
-    `;
+        const { data, error } = await supabase
+            .from('orders')
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
 
-        if (updated.length === 0) {
-            return res.status(404).json({ error: 'Order not found' });
-        }
-
-        res.json(updated[0]);
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         console.error('Update order error:', error);
         res.status(500).json({ error: 'Server error' });

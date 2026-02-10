@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
 
 interface User {
     id: string;
@@ -12,7 +13,7 @@ interface AuthContextType {
     token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (email: string, password: string) => Promise<{ success: boolean; role?: string }>;
     logout: () => void;
 }
 
@@ -25,70 +26,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Check for existing token on mount
+    // Check for existing session on mount
     useEffect(() => {
-        const storedToken = localStorage.getItem("admin-token");
-        if (storedToken) {
-            setToken(storedToken);
-            fetchUser(storedToken);
-        } else {
-            setIsLoading(false);
-        }
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                setIsLoading(false);
+                return;
+            }
+
+            setToken(session.access_token);
+            fetchUser(session.access_token, session.user.id, session.user.email!);
+        };
+
+        checkSession();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (session) {
+                setToken(session.access_token);
+                fetchUser(session.access_token, session.user.id, session.user.email!);
+            } else {
+                setUser(null);
+                setToken(null);
+                setIsLoading(false);
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const fetchUser = async (authToken: string) => {
+    const fetchUser = async (authToken: string, supabaseId: string, email: string) => {
         try {
-            const response = await fetch(`${API_URL}/auth/me`, {
-                headers: {
-                    Authorization: `Bearer ${authToken}`,
-                },
-            });
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('role, name')
+                .eq('id', supabaseId)
+                .maybeSingle();
 
-            if (response.ok) {
-                const userData = await response.json();
-                setUser(userData);
-            } else {
-                // Token is invalid, clear it
-                localStorage.removeItem("admin-token");
-                setToken(null);
+            if (error || !profile || profile.role !== 'admin') {
+                setIsLoading(false);
+                return;
             }
+
+            setUser({
+                id: supabaseId,
+                email: email,
+                name: profile.name || email.split('@')[0],
+                role: profile.role,
+            });
         } catch (error) {
             console.error("Failed to fetch user:", error);
-            localStorage.removeItem("admin-token");
-            setToken(null);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const login = async (email: string, password: string): Promise<boolean> => {
+    const login = async (email: string, password: string): Promise<{ success: boolean; role?: string }> => {
         try {
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email, password }),
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                setToken(data.token);
-                setUser(data.user);
-                localStorage.setItem("admin-token", data.token);
-                return true;
+            if (error) {
+                console.error("Login failed:", error.message);
+                return { success: false };
             }
-            return false;
+
+            // Check role from profiles table
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', data.user.id)
+                .maybeSingle();
+
+            return { success: true, role: profile?.role };
         } catch (error) {
             console.error("Login failed:", error);
-            return false;
+            return { success: false };
         }
     };
 
-    const logout = () => {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem("admin-token");
+    const logout = async () => {
+        await supabase.auth.signOut();
     };
 
     return (

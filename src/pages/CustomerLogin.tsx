@@ -32,11 +32,19 @@ export default function CustomerLogin() {
     const result = await login(email, password);
 
     if (result.success) {
-      toast({
-        title: "Welcome back!",
-        description: "You have been signed in successfully.",
-      });
-      navigate("/account");
+      if (result.role === 'customer') {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
+        navigate("/account");
+      } else {
+        toast({
+          title: "Access denied",
+          description: "Please use the admin login page.",
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         title: "Login failed",

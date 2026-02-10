@@ -1,5 +1,5 @@
 import express from 'express';
-import sql from '../db.js';
+import supabase from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -7,27 +7,13 @@ const router = express.Router();
 // Get all custom requests (protected)
 router.get('/', authenticateToken, async (req, res) => {
     try {
-        const requests = await sql`SELECT * FROM custom_requests ORDER BY created_at DESC`;
-
-        // Transform to match frontend format
-        const formattedRequests = requests.map(request => ({
-            id: request.id,
-            customer: {
-                firstName: request.customer_first_name,
-                lastName: request.customer_last_name,
-                email: request.customer_email,
-                phone: request.customer_phone,
-            },
-            description: request.description,
-            specifications: request.specifications || {},
-            images: request.images || [],
-            status: request.status,
-            quote: request.quote,
-            createdAt: request.created_at,
-            updatedAt: request.updated_at,
-        }));
-
-        res.json(formattedRequests);
+        const { data, error } = await supabase
+            .from('custom_requests')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         console.error('Get custom requests error:', error);
         res.status(500).json({ error: 'Server error' });
@@ -37,55 +23,51 @@ router.get('/', authenticateToken, async (req, res) => {
 // Submit custom request (public)
 router.post('/', async (req, res) => {
     try {
-        const { customer, description, specifications } = req.body;
+        const { customer_name, customer_email, customer_phone, bead_type, quantity, color, size, description, budget } = req.body;
 
-        if (!customer || !description) {
+        if (!customer_name || !customer_email || !description) {
             return res.status(400).json({ error: 'Customer info and description are required' });
         }
 
-        const newRequest = await sql`
-      INSERT INTO custom_requests (
-        customer_first_name, customer_last_name, customer_email, customer_phone,
-        description, specifications
-      )
-      VALUES (
-        ${customer.firstName},
-        ${customer.lastName},
-        ${customer.email},
-        ${customer.phone || null},
-        ${description},
-        ${specifications ? JSON.stringify(specifications) : null}
-      )
-      RETURNING *
-    `;
+        const { data, error } = await supabase
+            .from('custom_requests')
+            .insert({
+                customer_name,
+                customer_email,
+                customer_phone,
+                bead_type,
+                quantity,
+                color,
+                size,
+                description,
+                budget
+            })
+            .select()
+            .single();
 
-        res.status(201).json(newRequest[0]);
+        if (error) throw error;
+        res.status(201).json(data);
     } catch (error) {
         console.error('Create custom request error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// Update custom request status/quote (protected)
+// Update custom request status (protected)
 router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, quote } = req.body;
+        const { status } = req.body;
 
-        const updated = await sql`
-      UPDATE custom_requests
-      SET status = COALESCE(${status}, status),
-          quote = COALESCE(${quote ? JSON.stringify(quote) : null}, quote),
-          updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING *
-    `;
+        const { data, error } = await supabase
+            .from('custom_requests')
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
 
-        if (updated.length === 0) {
-            return res.status(404).json({ error: 'Request not found' });
-        }
-
-        res.json(updated[0]);
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         console.error('Update custom request error:', error);
         res.status(500).json({ error: 'Server error' });

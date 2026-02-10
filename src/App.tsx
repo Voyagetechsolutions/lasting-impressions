@@ -20,8 +20,7 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import CustomBeadsRequest from "./pages/CustomBeadsRequest";
 import AdminPanel from "./pages/AdminPanel";
-import AdminLogin from "./pages/AdminLogin";
-import CustomerLogin from "./pages/CustomerLogin";
+import Login from "./pages/Login";
 import CustomerSignup from "./pages/CustomerSignup";
 import CustomerAccount from "./pages/CustomerAccount";
 import NotFound from "./pages/NotFound";
@@ -41,7 +40,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
@@ -70,10 +69,9 @@ const App = () => (
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-success" element={<OrderSuccess />} />
                   <Route path="/custom-beads" element={<CustomBeadsRequest />} />
-                  <Route path="/login" element={<CustomerLogin />} />
+                  <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<CustomerSignup />} />
                   <Route path="/account" element={<CustomerAccount />} />
-                  <Route path="/admin/login" element={<AdminLogin />} />
                   <Route
                     path="/admin"
                     element={

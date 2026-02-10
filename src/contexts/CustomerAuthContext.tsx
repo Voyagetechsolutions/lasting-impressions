@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
 
 interface CustomerUser {
   id: string;
@@ -35,7 +36,7 @@ interface CustomerAuthContextType {
   isLoading: boolean;
   orders: OrderSummary[];
   bookings: BookingSummary[];
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; role?: string }>;
   signup: (name: string, email: string, password: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
@@ -53,72 +54,110 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   const [bookings, setBookings] = useState<BookingSummary[]>([]);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("customer-token");
-    if (storedToken) {
-      setToken(storedToken);
-      fetchProfile(storedToken);
-    } else {
-      setIsLoading(false);
-    }
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setIsLoading(false);
+        return;
+      }
+
+      setToken(session.access_token);
+      fetchProfile(session.access_token, session.user.id, session.user.email!);
+    };
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        setToken(session.access_token);
+        fetchProfile(session.access_token, session.user.id, session.user.email!);
+      } else {
+        setUser(null);
+        setToken(null);
+        setOrders([]);
+        setBookings([]);
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (authToken: string) => {
+  const fetchProfile = async (authToken: string, supabaseId: string, email: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/customer-me`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role, name, phone')
+        .eq('id', supabaseId)
+        .maybeSingle();
+
+      if (error || !profile || profile.role !== 'customer') {
+        setIsLoading(false);
+        return;
+      }
+
+      setUser({
+        id: supabaseId,
+        email: email,
+        name: profile.name || email.split('@')[0],
+        role: profile.role,
+        phone: profile.phone,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser({
-          id: data.id,
-          email: data.email,
-          name: data.name,
-          role: data.role,
-          phone: data.phone,
+      // Fetch orders and bookings from backend
+      try {
+        const ordersRes = await fetch(`${API_URL}/orders?email=${email}`, {
+          headers: { Authorization: `Bearer ${authToken}` },
         });
-        setOrders(data.orders || []);
-        setBookings(data.bookings || []);
-      } else {
-        localStorage.removeItem("customer-token");
-        setToken(null);
+        const bookingsRes = await fetch(`${API_URL}/bookings?email=${email}`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        
+        if (ordersRes.ok) {
+          const ordersData = await ordersRes.json();
+          setOrders(ordersData);
+        }
+        
+        if (bookingsRes.ok) {
+          const bookingsData = await bookingsRes.json();
+          setBookings(bookingsData);
+        }
+      } catch (err) {
+        console.error('Failed to fetch orders/bookings:', err);
       }
     } catch (error) {
       console.error("Failed to fetch customer profile:", error);
-      localStorage.removeItem("customer-token");
-      setToken(null);
     } finally {
       setIsLoading(false);
     }
   };
 
   const refreshProfile = async () => {
-    if (token) {
-      await fetchProfile(token);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await fetchProfile(session.access_token, session.user.id, session.user.email!);
     }
   };
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/customer-login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setToken(data.token);
-        setUser(data.user);
-        localStorage.setItem("customer-token", data.token);
-        // Fetch full profile with orders/bookings
-        fetchProfile(data.token);
-        return { success: true };
+      if (error) {
+        return { success: false, error: error.message };
       }
-      return { success: false, error: data.error || "Login failed" };
+
+      // Check role from profiles table
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      return { success: true, role: profile?.role };
     } catch (error) {
       console.error("Customer login failed:", error);
       return { success: false, error: "Network error" };
@@ -127,33 +166,32 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (name: string, email: string, password: string, phone?: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/customer-signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, phone }),
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            phone: phone,
+          },
+        },
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setToken(data.token);
-        setUser(data.user);
-        localStorage.setItem("customer-token", data.token);
-        return { success: true };
+      if (error) {
+        return { success: false, error: error.message };
       }
-      return { success: false, error: data.error || "Signup failed" };
+
+      // If signup is successful, we might want to trigger a profile creation in our backend
+      // But Supabase onAuthStateChange will handle the initial session setup
+      return { success: true };
     } catch (error) {
       console.error("Customer signup failed:", error);
       return { success: false, error: "Network error" };
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    setOrders([]);
-    setBookings([]);
-    localStorage.removeItem("customer-token");
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (

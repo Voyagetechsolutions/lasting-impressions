@@ -13,11 +13,17 @@ import classesRoutes from './routes/classes.js';
 import bookingsRoutes from './routes/bookings.js';
 import contactRoutes from './routes/contact.js';
 import customRequestsRoutes from './routes/custom-requests.js';
+import uploadRoutes from './routes/upload.js';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    console.error('FATAL: SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required.');
+    process.exit(1);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +48,7 @@ app.use('/api/classes', classesRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/contact-messages', contactRoutes);
 app.use('/api/custom-requests', customRequestsRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
