@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Layout } from "@/components/layout/Layout";
 import { useAdmin } from "@/contexts/AdminContext";
 import ProductForm from "@/components/admin/ProductForm";
+import ClassForm from "@/components/admin/ClassForm";
 import { Product } from "@/contexts/AdminContext";
 
 export default function AdminPanel() {
@@ -45,6 +46,7 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
+  const [isClassFormOpen, setIsClassFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 
   const analytics = getAnalytics();
@@ -459,7 +461,7 @@ export default function AdminPanel() {
                     Filter
                   </Button>
                 </div>
-                <Button variant="hero" className="gap-2">
+                <Button variant="hero" className="gap-2" onClick={() => setIsClassFormOpen(true)}>
                   <Plus className="h-4 w-4" />
                   Add Class
                 </Button>
@@ -681,6 +683,15 @@ export default function AdminPanel() {
             isOpen={isProductFormOpen}
             onClose={() => setIsProductFormOpen(false)}
             onSubmit={handleProductSubmit}
+          />
+
+          <ClassForm
+            isOpen={isClassFormOpen}
+            onClose={() => setIsClassFormOpen(false)}
+            onSuccess={() => {
+              setIsClassFormOpen(false);
+              // Classes will auto-reload from AdminContext
+            }}
           />
         </div>
       </section>
