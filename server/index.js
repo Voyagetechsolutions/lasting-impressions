@@ -21,8 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-    console.error('FATAL: SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required.');
-    process.exit(1);
+    console.error('WARNING: SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required.');
 }
 
 const app = express();
@@ -61,8 +60,12 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`API available at http://localhost:${PORT}/api`);
-});
+// Start server (only if not in serverless environment)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log(`API available at http://localhost:${PORT}/api`);
+    });
+}
+
+export default app;
