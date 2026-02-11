@@ -34,15 +34,14 @@ export default function CustomBeadsRequest() {
 
     try {
       const { error } = await supabase.from('custom_requests').insert({
-        customer_first_name: formData.firstName,
-        customer_last_name: formData.lastName,
+        customer_name: `${formData.firstName} ${formData.lastName}`,
         customer_email: formData.email,
         customer_phone: formData.phone,
         description: formData.description,
-        material: formData.material || null,
+        bead_type: formData.material || null,
         color: formData.color || null,
         size: formData.size || null,
-        quantity: formData.quantity || null,
+        quantity: formData.quantity ? parseInt(formData.quantity) : null,
         budget: formData.budget || null,
         status: 'pending',
       });

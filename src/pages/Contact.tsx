@@ -26,9 +26,9 @@ export default function Contact() {
       const { error } = await supabase.from('contact_messages').insert({
         name: formData.name,
         email: formData.email,
-        subject: formData.subject,
+        phone: formData.subject,
         message: formData.message,
-        status: 'pending',
+        status: 'new',
       });
 
       if (error) throw error;

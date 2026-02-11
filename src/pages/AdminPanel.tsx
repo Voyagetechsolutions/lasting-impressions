@@ -610,7 +610,7 @@ export default function AdminPanel() {
                         <tr>
                           <th className="text-left p-4 font-medium">Customer</th>
                           <th className="text-left p-4 font-medium">Description</th>
-                          <th className="text-left p-4 font-medium">Material</th>
+                          <th className="text-left p-4 font-medium">Bead Type</th>
                           <th className="text-left p-4 font-medium">Budget</th>
                           <th className="text-left p-4 font-medium">Date</th>
                         </tr>
@@ -621,7 +621,7 @@ export default function AdminPanel() {
                             <tr key={request.id} className="border-b">
                               <td className="p-4">
                                 <div>
-                                  <p className="font-medium">{request.customer_first_name} {request.customer_last_name}</p>
+                                  <p className="font-medium">{request.customer_name}</p>
                                   <p className="text-sm text-muted-foreground">{request.customer_email}</p>
                                   <p className="text-sm text-muted-foreground">{request.customer_phone}</p>
                                 </div>
@@ -631,7 +631,7 @@ export default function AdminPanel() {
                                   {request.description}
                                 </p>
                               </td>
-                              <td className="p-4">{request.material || 'N/A'}</td>
+                              <td className="p-4">{request.bead_type || 'N/A'}</td>
                               <td className="p-4">
                                 {request.budget ? `R${parseFloat(request.budget).toFixed(2)}` : "Not specified"}
                               </td>
@@ -663,7 +663,7 @@ export default function AdminPanel() {
                         <tr>
                           <th className="text-left p-4 font-medium">Name</th>
                           <th className="text-left p-4 font-medium">Email</th>
-                          <th className="text-left p-4 font-medium">Subject</th>
+                          <th className="text-left p-4 font-medium">Phone</th>
                           <th className="text-left p-4 font-medium">Message</th>
                           <th className="text-left p-4 font-medium">Date</th>
                         </tr>
@@ -674,7 +674,7 @@ export default function AdminPanel() {
                             <tr key={message.id} className="border-b">
                               <td className="p-4 font-medium">{message.name}</td>
                               <td className="p-4">{message.email}</td>
-                              <td className="p-4">{message.subject}</td>
+                              <td className="p-4">{message.phone || 'N/A'}</td>
                               <td className="p-4 max-w-xs">
                                 <p className="truncate" title={message.message}>
                                   {message.message}
