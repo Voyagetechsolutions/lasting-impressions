@@ -197,6 +197,8 @@ export default function Checkout() {
           total,
           shippingMethod,
           shippingInfo,
+          items,
+          paymentMethod,
         }
       });
 
@@ -452,18 +454,14 @@ export default function Checkout() {
                   )}
 
                   {paymentMethod === "eft" && (
-                    <div className="mt-6 p-4 bg-secondary/20 rounded-lg">
-                      <h3 className="font-semibold mb-2">Bank Transfer Details</h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Please transfer the total amount to:
+                    <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        Bank Transfer Instructions
                       </p>
-                      <div className="text-sm space-y-1">
-                        <p><strong>Bank:</strong> Standard Bank</p>
-                        <p><strong>Account Name:</strong> Lasting Impressions</p>
-                        <p><strong>Account Number:</strong> 123456789</p>
-                        <p><strong>Branch Code:</strong> 051001</p>
-                        <p><strong>Reference:</strong> Your order number</p>
-                      </div>
+                      <p className="text-sm text-amber-800">
+                        Contact us on <strong>+27 76 852 0695</strong> for banking details to complete your payment.
+                      </p>
                     </div>
                   )}
                 </div>
