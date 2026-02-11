@@ -170,18 +170,46 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const loadCustomRequests = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('custom_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setCustomRequests(data || []);
+    } catch (error) {
+      console.error("Failed to load custom requests:", error);
+    }
+  }, []);
+
+  const loadContactMessages = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setContactMessages(data || []);
+    } catch (error) {
+      console.error("Failed to load contact messages:", error);
+    }
+  }, []);
+
   const updateProduct = async () => {};
   const loadCategories = async () => {};
   const loadOrders = async () => {};
   const loadBookings = async () => {};
-  const loadCustomRequests = async () => {};
-  const loadContactMessages = async () => {};
   const getAnalytics = () => ({ totalRevenue: 0, totalOrders: 0, totalProducts: products.length, totalBookings: 0, recentOrders: [], lowStockProducts: [] });
 
   useEffect(() => {
     loadProducts();
     loadClasses();
-  }, [loadProducts, loadClasses]);
+    loadCustomRequests();
+    loadContactMessages();
+  }, [loadProducts, loadClasses, loadCustomRequests, loadContactMessages]);
 
   return (
     <AdminContext.Provider value={{ 

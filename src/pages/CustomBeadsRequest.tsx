@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layout } from "@/components/layout/Layout";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export default function CustomBeadsRequest() {
   const { toast } = useToast();
@@ -32,52 +33,42 @@ export default function CustomBeadsRequest() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/custom-requests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customer: {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone,
-          },
-          description: formData.description,
-          specifications: {
-            material: formData.material || undefined,
-            color: formData.color || undefined,
-            size: formData.size || undefined,
-            quantity: formData.quantity || undefined,
-            budget: formData.budget || undefined,
-          },
-        }),
+      const { error } = await supabase.from('custom_requests').insert({
+        customer_first_name: formData.firstName,
+        customer_last_name: formData.lastName,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        description: formData.description,
+        material: formData.material || null,
+        color: formData.color || null,
+        size: formData.size || null,
+        quantity: formData.quantity || null,
+        budget: formData.budget || null,
+        status: 'pending',
       });
 
-      if (response.ok) {
-        toast({
-          title: "Request Submitted!",
-          description: "We'll review your custom bead request and get back to you within 24-48 hours.",
-        });
+      if (error) throw error;
 
-        // Reset form
-        setFormData({
-          firstName: "",
-          lastName: "",
-          email: "",
-          phone: "",
-          description: "",
-          material: "",
-          color: "",
-          size: "",
-          quantity: "",
-          budget: 0,
-        });
-      } else {
-        throw new Error("Failed to submit request");
-      }
+      toast({
+        title: "Request Submitted!",
+        description: "We'll review your custom bead request and get back to you within 24-48 hours.",
+      });
+
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        description: "",
+        material: "",
+        color: "",
+        size: "",
+        quantity: "",
+        budget: 0,
+      });
     } catch (error) {
+      console.error("Failed to submit request:", error);
       toast({
         title: "Submission Failed",
         description: "There was an error submitting your request. Please try again.",

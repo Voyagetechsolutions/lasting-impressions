@@ -9,7 +9,6 @@ import { useCustomer } from "@/contexts/CustomerAuthContext";
 const navLinks = [
   { name: "Home", path: "/" },
   { name: "Jewelry", path: "/shop/jewelry" },
-  { name: "Beads & Supplies", path: "/shop/beads" },
   { name: "Custom Beads", path: "/custom-beads" },
   { name: "Classes", path: "/classes" },
   { name: "About", path: "/about" },

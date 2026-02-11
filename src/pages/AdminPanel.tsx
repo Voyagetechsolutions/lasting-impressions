@@ -33,13 +33,9 @@ export default function AdminPanel() {
     addProduct,
     updateProduct,
     deleteProduct,
-    orders,
-    updateOrderStatus,
-    bookings,
-    updateBookingStatus,
+    classes,
     customRequests,
-    updateCustomRequestStatus,
-    addQuoteToRequest,
+    contactMessages,
     getAnalytics
   } = useAdmin();
 
@@ -603,28 +599,31 @@ export default function AdminPanel() {
               </div>
 
               <Card>
+                <CardHeader>
+                  <CardTitle>Custom Requests</CardTitle>
+                  <CardDescription>Custom bead requests from customers</CardDescription>
+                </CardHeader>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="border-b">
                         <tr>
-                          <th className="text-left p-4 font-medium">Request ID</th>
                           <th className="text-left p-4 font-medium">Customer</th>
                           <th className="text-left p-4 font-medium">Description</th>
+                          <th className="text-left p-4 font-medium">Material</th>
                           <th className="text-left p-4 font-medium">Budget</th>
-                          <th className="text-left p-4 font-medium">Status</th>
-                          <th className="text-left p-4 font-medium">Actions</th>
+                          <th className="text-left p-4 font-medium">Date</th>
                         </tr>
                       </thead>
                       <tbody>
                         {customRequests.length > 0 ? (
-                          customRequests.map((request) => (
+                          customRequests.map((request: any) => (
                             <tr key={request.id} className="border-b">
-                              <td className="p-4 font-mono text-sm">{request.id}</td>
                               <td className="p-4">
                                 <div>
-                                  <p className="font-medium">{request.customer.firstName} {request.customer.lastName}</p>
-                                  <p className="text-sm text-muted-foreground">{request.customer.email}</p>
+                                  <p className="font-medium">{request.customer_first_name} {request.customer_last_name}</p>
+                                  <p className="text-sm text-muted-foreground">{request.customer_email}</p>
+                                  <p className="text-sm text-muted-foreground">{request.customer_phone}</p>
                                 </div>
                               </td>
                               <td className="p-4 max-w-xs">
@@ -632,41 +631,62 @@ export default function AdminPanel() {
                                   {request.description}
                                 </p>
                               </td>
+                              <td className="p-4">{request.material || 'N/A'}</td>
                               <td className="p-4">
-                                {request.specifications.budget ? `R${request.specifications.budget.toFixed(2)}` : "Not specified"}
+                                {request.budget ? `R${parseFloat(request.budget).toFixed(2)}` : "Not specified"}
                               </td>
-                              <td className="p-4">
-                                <Select value={request.status} onValueChange={(value) => updateCustomRequestStatus(request.id, value as any)}>
-                                  <SelectTrigger className="w-36">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="reviewing">Reviewing</SelectItem>
-                                    <SelectItem value="quoted">Quoted</SelectItem>
-                                    <SelectItem value="approved">Approved</SelectItem>
-                                    <SelectItem value="in_production">In Production</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </td>
-                              <td className="p-4">
-                                <div className="flex items-center gap-2">
-                                  <Button variant="ghost" size="sm" title="View Request">
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" title="Add Quote">
-                                    <MessageSquare className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </td>
+                              <td className="p-4">{new Date(request.created_at).toLocaleDateString()}</td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                            <td colSpan={5} className="p-8 text-center text-muted-foreground">
                               No custom requests found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Messages</CardTitle>
+                  <CardDescription>Messages from contact form</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="border-b">
+                        <tr>
+                          <th className="text-left p-4 font-medium">Name</th>
+                          <th className="text-left p-4 font-medium">Email</th>
+                          <th className="text-left p-4 font-medium">Subject</th>
+                          <th className="text-left p-4 font-medium">Message</th>
+                          <th className="text-left p-4 font-medium">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {contactMessages.length > 0 ? (
+                          contactMessages.map((message: any) => (
+                            <tr key={message.id} className="border-b">
+                              <td className="p-4 font-medium">{message.name}</td>
+                              <td className="p-4">{message.email}</td>
+                              <td className="p-4">{message.subject}</td>
+                              <td className="p-4 max-w-xs">
+                                <p className="truncate" title={message.message}>
+                                  {message.message}
+                                </p>
+                              </td>
+                              <td className="p-4">{new Date(message.created_at).toLocaleDateString()}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                              No contact messages found
                             </td>
                           </tr>
                         )}

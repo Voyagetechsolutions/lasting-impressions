@@ -5,6 +5,7 @@ import { Calendar, Clock, Users, MapPin, Video, ArrowRight, Loader2 } from "luci
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import classImage from "@/assets/beading-class.jpg";
+import { supabase } from "@/lib/supabase";
 
 interface ClassItem {
   id: string;
@@ -35,11 +36,28 @@ export default function Classes() {
   useEffect(() => {
     const fetchClasses = async () => {
       try {
-        const response = await fetch("/api/classes");
-        if (response.ok) {
-          const data = await response.json();
-          setClasses(data);
-        }
+        const { data, error } = await supabase
+          .from('classes')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        setClasses(data.map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description || '',
+          level: c.level || 'Beginner',
+          date: c.date || '',
+          time: c.time || '',
+          duration: c.duration || '',
+          price: parseFloat(c.price) || 0,
+          instructor: 'Lasting Impressions',
+          spots: c.max_participants || 10,
+          spotsLeft: c.spots_left || c.max_participants || 10,
+          type: 'in-person' as const,
+          image: c.image_url || classImage,
+        })));
       } catch (error) {
         console.error("Failed to fetch classes:", error);
       } finally {
