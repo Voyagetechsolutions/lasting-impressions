@@ -39,6 +39,9 @@ export default function AdminPanel() {
     getAnalytics
   } = useAdmin();
 
+  const orders: any[] = [];
+  const bookings: any[] = [];
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
@@ -103,16 +106,6 @@ export default function AdminPanel() {
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredOrders = orders.filter(order =>
-    order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    `${order.customer.firstName} ${order.customer.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredBookings = bookings.filter(booking =>
-    booking.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    `${booking.customer.firstName} ${booking.customer.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -311,49 +304,11 @@ export default function AdminPanel() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredOrders.length > 0 ? (
-                          filteredOrders.map((order) => (
-                            <tr key={order.id} className="border-b">
-                              <td className="p-4 font-mono text-sm">{order.id}</td>
-                              <td className="p-4">
-                                <div>
-                                  <p className="font-medium">{order.customer.firstName} {order.customer.lastName}</p>
-                                  <p className="text-sm text-muted-foreground">{order.customer.email}</p>
-                                </div>
-                              </td>
-                              <td className="p-4">{new Date(order.createdAt).toLocaleDateString()}</td>
-                              <td className="p-4">{order.items.length}</td>
-                              <td className="p-4 font-medium">R{order.total.toFixed(2)}</td>
-                              <td className="p-4">
-                                <Select value={order.status} onValueChange={(value) => updateOrderStatus(order.id, value as any)}>
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="processing">Processing</SelectItem>
-                                    <SelectItem value="shipped">Shipped</SelectItem>
-                                    <SelectItem value="delivered">Delivered</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </td>
-                              <td className="p-4">
-                                <div className="flex items-center gap-2">
-                                  <Button variant="ghost" size="sm" title="View Order">
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                              No orders found
-                            </td>
-                          </tr>
-                        )}
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                            No orders yet
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
@@ -479,48 +434,11 @@ export default function AdminPanel() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredBookings.length > 0 ? (
-                          filteredBookings.map((booking) => (
-                            <tr key={booking.id} className="border-b">
-                              <td className="p-4 font-mono text-sm">{booking.id}</td>
-                              <td className="p-4 font-medium">{booking.className}</td>
-                              <td className="p-4">{booking.customer.firstName} {booking.customer.lastName}</td>
-                              <td className="p-4">
-                                <div>
-                                  <p>{new Date(booking.date).toLocaleDateString()}</p>
-                                  <p className="text-sm text-muted-foreground">{booking.time}</p>
-                                </div>
-                              </td>
-                              <td className="p-4">{booking.attendees}</td>
-                              <td className="p-4">
-                                <Select value={booking.status} onValueChange={(value) => updateBookingStatus(booking.id, value as any)}>
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </td>
-                              <td className="p-4">
-                                <div className="flex items-center gap-2">
-                                  <Button variant="ghost" size="sm" title="View Booking">
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                              No bookings found
-                            </td>
-                          </tr>
-                        )}
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                            No bookings yet
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
