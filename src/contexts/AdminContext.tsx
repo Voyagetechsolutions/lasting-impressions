@@ -202,7 +202,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const loadCategories = async () => {};
   const loadOrders = async () => {};
   const loadBookings = async () => {};
-  const getAnalytics = () => ({ totalRevenue: 0, totalOrders: 0, totalProducts: products.length, totalBookings: 0, recentOrders: [], lowStockProducts: [] });
+  const getAnalytics = () => ({ 
+    totalRevenue: 0, 
+    totalOrders: 0, 
+    totalProducts: products.length, 
+    totalBookings: classes.length, 
+    recentOrders: [], 
+    lowStockProducts: products.filter(p => p.stock <= 5 && p.stock > 0)
+  });
 
   useEffect(() => {
     loadProducts();
