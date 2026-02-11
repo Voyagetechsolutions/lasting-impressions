@@ -73,66 +73,66 @@ export function ProductCard({ product }: ProductCardProps) {
             </button>
           </div>
         
-        {/* Category badge */}
-        <span className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm text-foreground text-xs font-medium px-3 py-1 rounded-full">
-          {product.category}
-        </span>
-
-        {/* Sale badge */}
-        {product.originalPrice && (
-          <span className="absolute top-4 right-4 bg-destructive text-destructive-foreground text-xs font-medium px-2 py-1 rounded-full">
-            Sale
+          {/* Category badge */}
+          <span className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm text-foreground text-xs font-medium px-3 py-1 rounded-full">
+            {product.category}
           </span>
-        )}
-      </Link>
 
-      <div className="p-6">
-        <Link to={`/product/${product.id}`}>
-          <h3 className="font-serif text-lg font-medium text-foreground mb-2 group-hover:text-primary transition-colors">
-            {product.name}
-          </h3>
-        </Link>
-        
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-semibold text-foreground">
-              R{product.price.toFixed(2)}
+          {/* Sale badge */}
+          {product.originalPrice && (
+            <span className="absolute top-4 right-4 bg-destructive text-destructive-foreground text-xs font-medium px-2 py-1 rounded-full">
+              Sale
             </span>
-            {product.originalPrice && (
-              <span className="text-sm text-muted-foreground line-through">
-                R{product.originalPrice.toFixed(2)}
-              </span>
-            )}
-          </div>
-          
-          <Button 
-            size="sm" 
-            variant="default" 
-            className="gap-2"
-            onClick={handleAddToCart}
-            disabled={product.inStock === false}
-          >
-            <ShoppingBag className="h-4 w-4" />
-            {product.inStock === false ? "Out of Stock" : "Add"}
-          </Button>
+          )}
         </div>
-      </div>
-    </article>
 
-    {/* Lightbox */}
-    {showLightbox && (
-      <div 
-        className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-        onClick={() => setShowLightbox(false)}
-      >
-        <img
-          src={product.image}
-          alt={product.name}
-          className="max-w-full max-h-full object-contain"
-          onClick={(e) => e.stopPropagation()}
-        />
-      </div>
-    )}
+        <div className="p-6">
+          <Link to={`/product/${product.id}`}>
+            <h3 className="font-serif text-lg font-medium text-foreground mb-2 group-hover:text-primary transition-colors">
+              {product.name}
+            </h3>
+          </Link>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-baseline gap-2">
+              <span className="text-lg font-semibold text-foreground">
+                R{product.price.toFixed(2)}
+              </span>
+              {product.originalPrice && (
+                <span className="text-sm text-muted-foreground line-through">
+                  R{product.originalPrice.toFixed(2)}
+                </span>
+              )}
+            </div>
+            
+            <Button 
+              size="sm" 
+              variant="default" 
+              className="gap-2"
+              onClick={handleAddToCart}
+              disabled={product.inStock === false}
+            >
+              <ShoppingBag className="h-4 w-4" />
+              {product.inStock === false ? "Out of Stock" : "Add"}
+            </Button>
+          </div>
+        </div>
+      </article>
+
+      {/* Lightbox */}
+      {showLightbox && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setShowLightbox(false)}
+        >
+          <img
+            src={product.image}
+            alt={product.name}
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </>
   );
 }
