@@ -5,6 +5,7 @@ import { ArrowRight, Sparkles, BookOpen, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { supabase } from "@/lib/supabase";
 import heroImage from "@/assets/hero-jewelry.jpg";
 import beadsImage from "@/assets/beads-collection.jpg";
 import classImage from "@/assets/beading-class.jpg";
@@ -16,18 +17,22 @@ const Index = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("/api/products");
-        if (response.ok) {
-          const data = await response.json();
-          setFeaturedProducts(
-            data.slice(0, 3).map((p: any) => ({
-              ...p,
-              price: parseFloat(p.price),
-              image: p.images?.[0] || heroImage,
-              inStock: p.in_stock ?? true,
-            }))
-          );
-        }
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(3);
+        
+        if (error) throw error;
+        
+        setFeaturedProducts(
+          data.map((p: any) => ({
+            ...p,
+            price: parseFloat(p.price),
+            image: p.images?.[0] || heroImage,
+            inStock: p.in_stock,
+          }))
+        );
       } catch (error) {
         console.error("Failed to fetch featured products:", error);
       }
