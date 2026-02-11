@@ -403,7 +403,7 @@ export default function AdminPanel() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search bookings..."
+                      placeholder="Search classes..."
                       className="pl-10 w-64"
                     />
                   </div>
@@ -419,26 +419,74 @@ export default function AdminPanel() {
               </div>
 
               <Card>
+                <CardHeader>
+                  <CardTitle>Classes</CardTitle>
+                  <CardDescription>Manage your classes and workshops</CardDescription>
+                </CardHeader>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="border-b">
                         <tr>
-                          <th className="text-left p-4 font-medium">Booking ID</th>
-                          <th className="text-left p-4 font-medium">Class</th>
-                          <th className="text-left p-4 font-medium">Customer</th>
+                          <th className="text-left p-4 font-medium">Title</th>
+                          <th className="text-left p-4 font-medium">Level</th>
                           <th className="text-left p-4 font-medium">Date & Time</th>
-                          <th className="text-left p-4 font-medium">Attendees</th>
-                          <th className="text-left p-4 font-medium">Status</th>
+                          <th className="text-left p-4 font-medium">Duration</th>
+                          <th className="text-left p-4 font-medium">Price</th>
+                          <th className="text-left p-4 font-medium">Spots</th>
                           <th className="text-left p-4 font-medium">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                            No bookings yet
-                          </td>
-                        </tr>
+                        {classes.length > 0 ? (
+                          classes.map((classItem: any) => (
+                            <tr key={classItem.id} className="border-b">
+                              <td className="p-4">
+                                <div className="flex items-center gap-3">
+                                  {classItem.image_url && (
+                                    <img src={classItem.image_url} alt={classItem.title} className="w-12 h-12 rounded object-cover" />
+                                  )}
+                                  <p className="font-medium">{classItem.title}</p>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <span className="px-2 py-1 bg-secondary rounded-full text-xs">
+                                  {classItem.level || 'N/A'}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <div>
+                                  <p>{classItem.date ? new Date(classItem.date).toLocaleDateString() : 'TBA'}</p>
+                                  <p className="text-sm text-muted-foreground">{classItem.time || 'TBA'}</p>
+                                </div>
+                              </td>
+                              <td className="p-4">{classItem.duration || 'N/A'}</td>
+                              <td className="p-4 font-medium">R{parseFloat(classItem.price).toFixed(2)}</td>
+                              <td className="p-4">
+                                {classItem.spots_left || classItem.max_participants || 'N/A'} / {classItem.max_participants || 'N/A'}
+                              </td>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  <Button variant="ghost" size="sm" title="View Class">
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" title="Edit Class">
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" title="Delete Class">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                              No classes found. Click "Add Class" to create one.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
