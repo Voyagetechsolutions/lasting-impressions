@@ -78,7 +78,7 @@ export default function Checkout() {
     pickup: 0,
   };
 
-  const subtotal = totalPrice * 18.5; // Convert USD to ZAR (approximate rate)
+  const subtotal = totalPrice;
   const shippingCost = shippingCosts[shippingMethod as keyof typeof shippingCosts];
   const total = subtotal + shippingCost;
 
@@ -502,7 +502,7 @@ export default function Checkout() {
                         )}
                         <div className="flex justify-between items-center mt-1">
                           <span className="text-xs text-muted-foreground">Qty: {item.quantity}</span>
-                          <span className="font-semibold text-sm">R{(item.price * item.quantity * 18.5).toFixed(2)}</span>
+                          <span className="font-semibold text-sm">R{(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
