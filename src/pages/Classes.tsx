@@ -213,7 +213,7 @@ export default function Classes() {
                           / person
                         </span>
                       </div>
-                      <Link to={`/classes/${classItem.id}/book`}>
+                      <Link to={`/classes/${classItem.id}`}>
                         <Button variant="teal" className="gap-2">
                           Book Now
                           <ArrowRight className="h-4 w-4" />

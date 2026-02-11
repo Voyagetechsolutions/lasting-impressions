@@ -12,6 +12,7 @@ import ShopJewelry from "./pages/ShopJewelry";
 import ShopBeads from "./pages/ShopBeads";
 import ProductDetail from "./pages/ProductDetail";
 import Classes from "./pages/Classes";
+import ClassDetail from "./pages/ClassDetail";
 import ClassBooking from "./pages/ClassBooking";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -62,6 +63,7 @@ const App = () => (
                   {/* <Route path="/shop/beads" element={<ShopBeads />} /> */}
                   <Route path="/product/:id" element={<ProductDetail />} />
                   <Route path="/classes" element={<Classes />} />
+                  <Route path="/classes/:id" element={<ClassDetail />} />
                   <Route path="/classes/:id/book" element={<ClassBooking />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/contact" element={<Contact />} />
