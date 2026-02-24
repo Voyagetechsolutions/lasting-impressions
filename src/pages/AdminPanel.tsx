@@ -13,7 +13,9 @@ import {
   Eye,
   Search,
   Filter,
-  MessageSquare
+  MessageSquare,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,19 +36,22 @@ export default function AdminPanel() {
     updateProduct,
     deleteProduct,
     classes,
+    bookings,
+    updateBookingStatus,
     customRequests,
     contactMessages,
     getAnalytics
   } = useAdmin();
 
-  const orders: any[] = [];
-  const bookings: any[] = [];
+
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [isClassFormOpen, setIsClassFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>();
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
+  const [bookingSearchTerm, setBookingSearchTerm] = useState("");
 
   const analytics = getAnalytics();
 
@@ -78,6 +83,41 @@ export default function AdminPanel() {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+  const getBookingStatusColor = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "PENDING_WHATSAPP_CONFIRMATION":
+        return "bg-yellow-100 text-yellow-800";
+      case "CONFIRMED":
+        return "bg-green-100 text-green-800";
+      case "CANCELLED":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getBookingStatusLabel = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "PENDING_WHATSAPP_CONFIRMATION":
+        return "Pending";
+      case "CONFIRMED":
+        return "Confirmed";
+      case "CANCELLED":
+        return "Cancelled";
+      default:
+        return status || "Unknown";
+    }
+  };
+
+  const filteredBookings = bookings.filter((booking: any) => {
+    const matchesStatus = bookingStatusFilter === "all" || booking.status === bookingStatusFilter;
+    const matchesSearch = !bookingSearchTerm ||
+      booking.booking_reference?.toLowerCase().includes(bookingSearchTerm.toLowerCase()) ||
+      `${booking.customer_first_name} ${booking.customer_last_name}`.toLowerCase().includes(bookingSearchTerm.toLowerCase()) ||
+      booking.class_name?.toLowerCase().includes(bookingSearchTerm.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
@@ -398,20 +438,9 @@ export default function AdminPanel() {
 
             {/* Bookings Tab */}
             <TabsContent value="bookings" className="space-y-6">
+              {/* Classes Section */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search classes..."
-                      className="pl-10 w-64"
-                    />
-                  </div>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filter
-                  </Button>
-                </div>
+                <h2 className="text-xl font-serif font-semibold">Classes</h2>
                 <Button variant="hero" className="gap-2" onClick={() => setIsClassFormOpen(true)}>
                   <Plus className="h-4 w-4" />
                   Add Class
@@ -419,10 +448,6 @@ export default function AdminPanel() {
               </div>
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Classes</CardTitle>
-                  <CardDescription>Manage your classes and workshops</CardDescription>
-                </CardHeader>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -492,6 +517,131 @@ export default function AdminPanel() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Booking Records Section */}
+              <div className="border-t border-border pt-8 mt-8">
+                <h2 className="text-xl font-serif font-semibold mb-4">Booking Records</h2>
+
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by reference, name or class..."
+                        value={bookingSearchTerm}
+                        onChange={(e) => setBookingSearchTerm(e.target.value)}
+                        className="pl-10 w-72"
+                      />
+                    </div>
+                    <Select value={bookingStatusFilter} onValueChange={setBookingStatusFilter}>
+                      <SelectTrigger className="w-52">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="PENDING_WHATSAPP_CONFIRMATION">Pending</SelectItem>
+                        <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                        <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                <Card>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="border-b">
+                          <tr>
+                            <th className="text-left p-4 font-medium">Reference</th>
+                            <th className="text-left p-4 font-medium">Class</th>
+                            <th className="text-left p-4 font-medium">Customer</th>
+                            <th className="text-left p-4 font-medium">Phone</th>
+                            <th className="text-left p-4 font-medium">Date</th>
+                            <th className="text-left p-4 font-medium">Qty</th>
+                            <th className="text-left p-4 font-medium">Total</th>
+                            <th className="text-left p-4 font-medium">Status</th>
+                            <th className="text-left p-4 font-medium">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredBookings.length > 0 ? (
+                            filteredBookings.map((booking: any) => (
+                              <tr key={booking.id} className="border-b">
+                                <td className="p-4">
+                                  <span className="font-mono text-sm font-medium">
+                                    {booking.booking_reference || 'N/A'}
+                                  </span>
+                                </td>
+                                <td className="p-4">
+                                  <p className="font-medium">{booking.class_name || 'N/A'}</p>
+                                </td>
+                                <td className="p-4">
+                                  <p className="font-medium">
+                                    {booking.customer_first_name} {booking.customer_last_name}
+                                  </p>
+                                </td>
+                                <td className="p-4 text-sm">
+                                  {booking.customer_phone || booking.customer_email || 'N/A'}
+                                </td>
+                                <td className="p-4 text-sm">
+                                  {booking.date ? new Date(booking.date).toLocaleDateString() : 'N/A'}
+                                </td>
+                                <td className="p-4 text-center">{booking.attendees || 1}</td>
+                                <td className="p-4 font-medium">
+                                  {booking.total_price ? `R${parseFloat(booking.total_price).toFixed(2)}` : 'N/A'}
+                                </td>
+                                <td className="p-4">
+                                  <Badge className={getBookingStatusColor(booking.status)}>
+                                    {getBookingStatusLabel(booking.status)}
+                                  </Badge>
+                                </td>
+                                <td className="p-4">
+                                  <div className="flex items-center gap-1">
+                                    {booking.status !== 'CONFIRMED' && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        title="Mark Confirmed"
+                                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                        onClick={() => updateBookingStatus(booking.id, 'CONFIRMED')}
+                                      >
+                                        <CheckCircle className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    {booking.status !== 'CANCELLED' && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        title="Cancel Booking"
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => updateBookingStatus(booking.id, 'CANCELLED')}
+                                      >
+                                        <XCircle className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                                {bookings.length === 0
+                                  ? 'No bookings yet. Bookings will appear here when customers book classes.'
+                                  : 'No bookings match your filters.'}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             {/* Settings Tab */}

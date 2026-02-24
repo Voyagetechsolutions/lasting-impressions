@@ -51,6 +51,7 @@ interface AdminContextType {
   loadOrders: () => Promise<void>;
   bookings: any[];
   loadBookings: () => Promise<void>;
+  updateBookingStatus: (id: string, status: string) => Promise<void>;
   customRequests: any[];
   loadCustomRequests: () => Promise<void>;
   contactMessages: any[];
@@ -78,9 +79,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
-      
+
       setProducts(data.map((p: any) => ({
         ...p,
         price: parseFloat(p.price),
@@ -98,11 +99,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const addProduct = async (formData: FormData) => {
     try {
       setIsLoading(true);
-      
+
       // Upload images to Supabase Storage
       const imageUrls: string[] = [];
       const imageFiles = formData.getAll('images') as File[];
-      
+
       for (const file of imageFiles) {
         if (file instanceof File) {
           const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.name}`;
@@ -162,7 +163,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         .from('classes')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       setClasses(data || []);
     } catch (error) {
@@ -176,7 +177,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         .from('custom_requests')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       setCustomRequests(data || []);
     } catch (error) {
@@ -190,7 +191,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         .from('contact_messages')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       setContactMessages(data || []);
     } catch (error) {
@@ -198,37 +199,67 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const updateProduct = async () => {};
-  const loadCategories = async () => {};
-  const loadOrders = async () => {};
-  const loadBookings = async () => {};
-  const getAnalytics = () => ({ 
-    totalRevenue: 0, 
-    totalOrders: 0, 
-    totalProducts: products.length, 
-    totalBookings: classes.length, 
-    recentOrders: [], 
+  const updateProduct = async () => { };
+  const loadCategories = async () => { };
+  const loadOrders = async () => { };
+
+  const loadBookings = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setBookings(data || []);
+    } catch (error) {
+      console.error("Failed to load bookings:", error);
+    }
+  }, []);
+
+  const updateBookingStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status })
+        .eq('id', id);
+      if (error) throw error;
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+      toast({ title: `Booking ${status === 'CONFIRMED' ? 'confirmed' : 'cancelled'}` });
+    } catch (error) {
+      console.error('Failed to update booking status:', error);
+      toast({ title: 'Error', description: 'Failed to update booking', variant: 'destructive' });
+    }
+  };
+
+  const getAnalytics = () => ({
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalProducts: products.length,
+    totalBookings: bookings.length,
+    recentOrders: [],
     lowStockProducts: products.filter(p => p.stock <= 5 && p.stock > 0)
   });
 
   useEffect(() => {
     loadProducts();
     loadClasses();
+    loadBookings();
     loadCustomRequests();
     loadContactMessages();
-  }, [loadProducts, loadClasses, loadCustomRequests, loadContactMessages]);
+  }, [loadProducts, loadClasses, loadBookings, loadCustomRequests, loadContactMessages]);
 
   return (
-    <AdminContext.Provider value={{ 
+    <AdminContext.Provider value={{
       products, loadProducts, addProduct, deleteProduct, updateProduct,
       classes, loadClasses,
       categories, loadCategories,
       orders, loadOrders,
-      bookings, loadBookings,
+      bookings, loadBookings, updateBookingStatus,
       customRequests, loadCustomRequests,
       contactMessages, loadContactMessages,
       getAnalytics,
-      isLoading 
+      isLoading
     }}>
       {children}
     </AdminContext.Provider>

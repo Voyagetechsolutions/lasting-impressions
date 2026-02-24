@@ -21,7 +21,7 @@ export default function ClassDetail() {
           .select('*')
           .eq('id', id)
           .single();
-        
+
         if (error) throw error;
         setClassItem(data);
       } catch (error) {
@@ -141,13 +141,14 @@ export default function ClassDetail() {
                     R{parseFloat(classItem.price).toFixed(2)}
                   </span>
                 </div>
-                <Button 
-                  variant="hero" 
-                  size="lg" 
+                <Button
+                  variant="hero"
+                  size="lg"
                   className="w-full"
                   onClick={() => navigate(`/classes/${id}/book`)}
+                  disabled={(classItem.spots_left ?? classItem.max_participants ?? 1) === 0}
                 >
-                  Book This Class
+                  {(classItem.spots_left ?? classItem.max_participants ?? 1) === 0 ? 'Class Full' : 'Book This Class'}
                 </Button>
               </div>
 

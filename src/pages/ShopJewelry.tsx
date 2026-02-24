@@ -36,7 +36,7 @@ export default function ShopJewelry() {
     categories: [],
     materials: [],
     colors: [],
-    priceRange: [0, 1000],
+    priceRange: [0, Infinity],
     inStock: false,
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -49,9 +49,9 @@ export default function ShopJewelry() {
           .from('products')
           .select('*')
           .order('created_at', { ascending: false });
-        
+
         if (error) throw error;
-        
+
         setProducts(data.map((p: any) => ({
           ...p,
           price: parseFloat(p.price),
@@ -247,11 +247,10 @@ export default function ShopJewelry() {
               </div>
             </div>
           ) : (
-            <div className={`grid gap-8 ${
-              viewMode === "grid"
+            <div className={`grid gap-8 ${viewMode === "grid"
                 ? "sm:grid-cols-2 lg:grid-cols-3"
                 : "grid-cols-1 max-w-2xl"
-            }`}>
+              }`}>
               {filteredProducts.map((product, index) => (
                 <motion.div
                   key={product.id}
